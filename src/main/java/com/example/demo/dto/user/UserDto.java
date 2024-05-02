@@ -103,7 +103,7 @@ public class UserDto extends AbstractDTO<UserDto> {
 		return dateOfBirth;
 	}
 
-	public void setDateOfBirth(String dateOfBirth) {
+	public void setDateOfBirth(String dateOfBi) {
 		this.dateOfBirth = dateOfBirth;
 	}
 

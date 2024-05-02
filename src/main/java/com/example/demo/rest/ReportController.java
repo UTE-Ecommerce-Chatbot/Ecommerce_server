@@ -1,12 +1,19 @@
 package com.example.demo.rest;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +31,7 @@ import com.example.demo.dto.AdvanceSearchDto;
 import com.example.demo.dto.SearchDto;
 import com.example.demo.dto.order.OrderHisDto;
 import com.example.demo.dto.order.OrderResponse;
+import com.example.demo.dto.order.TotalOrderDto;
 import com.example.demo.dto.product.ProductListDto;
 import com.example.demo.dto.report.ReportBrand;
 import com.example.demo.dto.report.ReportCategory;
@@ -43,6 +51,7 @@ import com.example.demo.service.CommentService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.ProductService;
 import com.example.demo.service.ReportService;
+import org.springframework.data.domain.Sort;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -70,13 +79,13 @@ public class ReportController {
 
 	@Autowired
 	private InventoryDetailRepository inventoryDetailRepos;
-	
+
 	@Autowired
 	private InventoryRepository inventoryRepos;
 
 	// đếm số lượng đơn hàng theo trạng thái đơn hàng
 	@GetMapping("/order/count")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<List<OrderResponse>> getQuantityByStatus(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "1000") Integer limit,
@@ -115,7 +124,7 @@ public class ReportController {
 
 	// đếm số lượng đơn hàng theo trạng thái đơn hàng
 	@GetMapping("/seller/count/{username}")
-//	@PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SELLER')")
+	// @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SELLER')")
 	public ResponseEntity<List<OrderResponse>> getQuantityByStatusSellerByAdmin(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "1000") Integer limit,
@@ -153,7 +162,7 @@ public class ReportController {
 	}
 
 	@GetMapping("/seller_list/{username}")
-//	@PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SELLER')")
+	// @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_SELLER')")
 	public ResponseEntity<Page<OrderHisDto>> getAllSellerByUsernameByAdmin(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
@@ -170,7 +179,7 @@ public class ReportController {
 
 	// đếm số lượng đơn hàng theo trạng thái đơn hàng
 	@GetMapping("/seller/count")
-//	@PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SELLER')")
+	// @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SELLER')")
 	public ResponseEntity<List<OrderResponse>> getQuantityByStatusAndShipper(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "1000") Integer limit,
@@ -211,7 +220,7 @@ public class ReportController {
 
 	// thống kê doanh thu theo ngày
 	@GetMapping("/revenue")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<List<OrderResponse>> reportRevenue(
 			@RequestParam(name = "last_date", defaultValue = "1000000000") Integer last_date) {
 		List<OrderResponse> list = new ArrayList<>();
@@ -275,7 +284,7 @@ public class ReportController {
 
 	// thống kê sản phẩm theo đơn hàng (sản phẩm bán chạy)
 	@GetMapping("/product")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportProductOrder>> reportByProduct(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
@@ -340,7 +349,7 @@ public class ReportController {
 
 	// thống kê bình luận
 	@GetMapping("/comment")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportComment>> reportComment(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "1000") Integer limit) {
@@ -377,7 +386,7 @@ public class ReportController {
 
 	// thống kê theo danh mục
 	@GetMapping("/category")
-//		@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportCategory>> reportByCategory(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
@@ -392,7 +401,7 @@ public class ReportController {
 
 	// thống kê chi tiết theo danh mục
 	@GetMapping("/category/detail/{category_id}")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportProductOrder>> reportDetailProductByCategory(
 			@PathVariable(name = "category_id") Long category_id,
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
@@ -408,7 +417,7 @@ public class ReportController {
 
 	// thống kê theo thương thiệu
 	@GetMapping("/brand")
-//		@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportBrand>> reportByBrand(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
@@ -423,7 +432,7 @@ public class ReportController {
 
 	// thống kê chi tiết theo thương hiệu
 	@GetMapping("/brand/detail/{brand_id}")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportProductOrder>> reportDetailProductByBrand(
 			@PathVariable(name = "brand_id") Long brand_id,
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
@@ -439,7 +448,7 @@ public class ReportController {
 
 	// thống kê theo nhà cung câps
 	@GetMapping("/supplier")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportSupplier>> reportBySupplier(
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
@@ -454,7 +463,7 @@ public class ReportController {
 
 	// thống kê chi tiết theo ncc
 	@GetMapping("/supplier/detail/{supplier_id}")
-//	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
 	public ResponseEntity<Page<ReportProductOrder>> reportDetailProductBySupplier(
 			@PathVariable(name = "supplier_id") Long supplier_id,
 			@RequestParam(name = "page", defaultValue = "0") Integer page,
@@ -468,4 +477,170 @@ public class ReportController {
 		return new ResponseEntity<Page<ReportProductOrder>>(result, HttpStatus.OK);
 	}
 
+	@GetMapping("/high-sales-products")
+	public ResponseEntity<Page<ReportProductOrder>> reportHighSalesProducts(
+			@RequestParam(name = "page", defaultValue = "0") Integer page,
+			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
+			@RequestParam(name = "last_date", defaultValue = "0") Integer last_date) {
+		AdvanceSearchDto dto = new AdvanceSearchDto();
+		dto.setPageIndex(page);
+		dto.setPageSize(limit);
+		dto.setLast_date(last_date);
+		Page<ReportProductOrder> result = reportService.reportHighSalesProducts(dto);
+		return new ResponseEntity<Page<ReportProductOrder>>(result, HttpStatus.OK);
+	}
+
+	@GetMapping("/sales-by-category")
+	public ResponseEntity<Page<ReportProductOrder>> reportSalesByCategory(
+			@RequestParam(name = "page", defaultValue = "0") Integer page,
+			@RequestParam(name = "limit", defaultValue = "10") Integer limit,
+			@RequestParam(name = "last_date", defaultValue = "0") Integer last_date) {
+		AdvanceSearchDto dto = new AdvanceSearchDto();
+		dto.setPageIndex(page);
+		dto.setPageSize(limit);
+		dto.setLast_date(last_date);
+		Page<ReportProductOrder> result = reportService.reportSalesByCategory(dto);
+		return new ResponseEntity<Page<ReportProductOrder>>(result, HttpStatus.OK);
+	}
+
+	@GetMapping("/order/base-time")
+	// @PreAuthorize("hasRole('ROLE_ADMIN')")
+	public ResponseEntity<List<TotalOrderDto>> getOrderBaseTime(
+			@RequestParam(name = "page", defaultValue = "0") Integer page,
+			@RequestParam(name = "limit", defaultValue = "1000") Integer limit,
+			@RequestParam(name = "last_date", defaultValue = "0") Integer last_date,
+			@RequestParam(name = "status", defaultValue = "4") Integer status) {
+		AdvanceSearchDto dto = new AdvanceSearchDto();
+		dto.setPageIndex(page);
+		dto.setPageSize(limit);
+		dto.setLast_date(last_date);
+		dto.setStatus(status);
+		Page<OrderHisDto> result = orderService.getAllOrder(dto);
+
+		// List<OrderResponse> list = new ArrayList<OrderResponse>();
+		Integer count_complete = 0, count_shiping = 0, count_wait = 0, count_cancel = 0;
+		List<TotalOrderDto> totalOrderDtoList = new ArrayList<>();
+
+		// if (last_date == 0) {
+		// List<OrderResponse> lists = new ArrayList<OrderResponse>();
+		//
+		// // If last_date is 0, get orders for each hour of the current day
+		// for (int hour = 0; hour < 24; hour++) {
+		// LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+		//
+		// final int finalHour = hour;
+		// List<OrderHisDto> ordersInHour = result.stream()
+		// .filter(order -> {
+		// LocalDateTime orderDate = LocalDateTime.parse(order.getCreatedDate());
+		// return orderDate.isAfter(startOfDay.plusHours(finalHour))
+		// && orderDate.isBefore(startOfDay.plusHours(finalHour + 1));
+		// })
+		// .collect(Collectors.toList());
+		//
+		// int countComplete = 0;
+		// int countShipping = 0;
+		// int countWait = 0;
+		// int countCancel = 0;
+		//
+		// for (OrderHisDto item : ordersInHour) {
+		// if (item.getStatus_order() == 3) {
+		// countComplete += 1;
+		// } else if (item.getStatus_order() == 2) {
+		// countShipping += 1;
+		// } else if (item.getStatus_order() == 0) {
+		// countWait += 1;
+		// } else {
+		// countCancel += 1;
+		// }
+		// }
+		//
+		// lists.add(new OrderResponse("Đã hoàn thành", countComplete > 0 ?
+		// countComplete : 0));
+		// lists.add(new OrderResponse("Đang giao hàng", countShipping > 0 ?
+		// countShipping : 0));
+		// lists.add(new OrderResponse("Đang chờ xác nhận", countWait > 0 ? countWait :
+		// 0));
+		// lists.add(new OrderResponse("Đã huỷ đơn", countCancel > 0 ? countCancel :
+		// 0));
+		// lists.add(new OrderResponse("Tỉ lệ huỷ đơn (%)",
+		// (int) Math.round(CalculateDiscount.calPercent(countCancel,
+		// ordersInHour.size()))));
+		// lists.add(new OrderResponse("Tỉ lệ thành công (%)",
+		// (int) Math.round(CalculateDiscount.calPercent(countComplete,
+		// ordersInHour.size()))));
+		// totalOrderDtoList.add(new TotalOrderDto(LocalTime.of(hour, 0), lists));
+		// }
+
+		if (last_date == 7) {
+			// If last_date is 7, get orders for each day of the current week
+			for (int day = 0; day < 7; day++) {
+				List<OrderResponse> lists = new ArrayList<OrderResponse>();
+
+				LocalDateTime startOfWeek = LocalDateTime.now().with(LocalTime.MIN);
+				final int finalDay = day;
+				List<OrderHisDto> ordersInDay = result.stream()
+						.filter(order -> {
+							LocalDateTime orderDate = LocalDateTime.parse(order.getCreatedDate());
+							return orderDate.isAfter(startOfWeek.minusDays(finalDay))
+									&& orderDate.isBefore(startOfWeek.minusDays(finalDay + 1));
+						})
+						.collect(Collectors.toList());
+
+				int countComplete = 0;
+				int countShipping = 0;
+				int countWait = 0;
+				int countCancel = 0;
+
+				for (OrderHisDto item : ordersInDay) {
+					if (item.getStatus_order() == 3) {
+						countComplete += 1;
+					} else if (item.getStatus_order() == 2) {
+						countShipping += 1;
+					} else if (item.getStatus_order() == 0) {
+						countWait += 1;
+					} else {
+						countCancel += 1;
+					}
+				}
+				lists.add(new OrderResponse("Đã hoàn thành", countComplete > 0 ? countComplete : 0));
+				lists.add(new OrderResponse("Đang giao hàng", countShipping > 0 ? countShipping : 0));
+				lists.add(new OrderResponse("Đang chờ xác nhận", countWait > 0 ? countWait : 0));
+				lists.add(new OrderResponse("Đã huỷ đơn", countCancel > 0 ? countCancel : 0));
+				lists.add(new OrderResponse("Tỉ lệ huỷ đơn (%)",
+						(int) Math.round(CalculateDiscount.calPercent(countCancel, ordersInDay.size()))));
+				lists.add(new OrderResponse("Tỉ lệ thành công (%)",
+						(int) Math.round(CalculateDiscount.calPercent(countComplete, ordersInDay.size()))));
+				totalOrderDtoList.add(new TotalOrderDto(
+						LocalDate.parse(startOfWeek.minusDays(finalDay).format(DateTimeFormatter.ISO_LOCAL_DATE)),
+						lists));
+			}
+		}
+		return new ResponseEntity<List<TotalOrderDto>>(totalOrderDtoList, HttpStatus.OK);
+
+	}
+//	@GetMapping("/revenue/base-time")
+//	public ResponseEntity<Map<String, BigDecimal>> getRevenueBaseTime(
+//			@RequestParam(name = "last_date", defaultValue = "0") Integer last_date) {
+//		Map<String, BigDecimal> result = new LinkedHashMap<>();
+//
+//		if (last_date == 0) {
+//			// If last_date is 0, get revenue for each hour of the current day
+//			for (int hour = 0; hour < 24; hour++) {
+//				LocalDateTime start_time = LocalDateTime.now().withHour(hour).withMinute(0).withSecond(0);
+//				LocalDateTime end_time = start_time.plusHours(1);
+//				BigDecimal revenue = orderService.getTotalRevenue(start_time, end_time);
+//				result.put(String.format("%02d:00 - %02d:00", hour, hour + 1), revenue);
+//			}
+//		} else {
+//			// If last_date is not 0, get revenue for each day within the last_date days
+//			for (int day = 0; day < last_date; day++) {
+//				LocalDateTime start_time = LocalDateTime.now().minusDays(day).withHour(0).withMinute(0).withSecond(0);
+//				LocalDateTime end_time = start_time.plusDays(1);
+//				BigDecimal revenue = orderService.getTotalRevenue(start_time, end_time);
+//				result.put(start_time.toLocalDate().toString(), revenue);
+//			}
+//		}
+//
+//		return new ResponseEntity<Map<String, BigDecimal>>(result, HttpStatus.OK);
+//	}
 }

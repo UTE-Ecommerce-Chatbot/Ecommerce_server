@@ -52,5 +52,12 @@ public List<OrderHisDto> getAllOrderByUser(String username);
 	// Thống kê sản phẩm theo nhân viên bán hàng
 	public Page<ReportCustomer> reportSellerEmployee(AdvanceSearchDto dto);
 	
-	
+
+
+
+	// Last edit: 17/04/2024
+	public Page<ReportProductOrder> reportHighSalesProducts(AdvanceSearchDto dto);
+
+	public Page<ReportProductOrder> reportSalesByCategory(AdvanceSearchDto dto);
+
 }

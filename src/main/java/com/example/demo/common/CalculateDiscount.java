@@ -14,4 +14,11 @@ public class CalculateDiscount {
 		return (double) Math.round(percent * 10) / 10;
 	}
 
+	
+	public static Double calPercent(Integer num1, Integer num2) {
+
+		Double percent = num1.doubleValue() / num2.doubleValue() * 100;
+		return (double) Math.round(percent * 10) / 10;
+	}
+
 }

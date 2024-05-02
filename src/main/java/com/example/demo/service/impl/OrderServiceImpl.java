@@ -451,4 +451,72 @@ public class OrderServiceImpl implements OrderService {
 		return null;
 	}
 
+
+
+//
+//	@Override
+//	public Page<OrderHisDto> getOrderBaseTime(AdvanceSearchDto dto) {
+//		int pageIndex = dto.getPageIndex();
+//		int pageSize = dto.getPageSize();
+//		if (pageIndex > 0)
+//			pageIndex -= 1;
+//		else
+//			pageIndex = 0;
+//
+//		String whereClause = "";
+//		String orderBy = " ORDER BY entity.createdDate DESC";
+//		String sqlCount = "select count(entity.id) from  Order as entity where (1=1) ";
+//		String sql = "select new com.example.demo.dto.order.OrderHisDto(entity) from  Order as entity where (1=1) ";
+//
+//		if (dto.getStatus() == -1 || dto.getStatus() == 0 || dto.getStatus() == 1 || dto.getStatus() == 2 || dto.getStatus() == -2 || dto.getStatus() == 3) {
+//			whereClause += " AND ( entity.status = " + dto.getStatus() + ")";
+//		} else {
+//			whereClause += "";
+//		}
+//
+//		if (dto.getLast_date() != null
+//				&& (dto.getLast_date() == 1 || dto.getLast_date() == 7 || dto.getLast_date() == 30)) {
+//			whereClause += " AND (TIMESTAMPDIFF(DAY, entity.createdDate, NOW()) <= " + dto.getLast_date() + " )";
+//		} else {
+//			whereClause += "";
+//		}
+//
+//		sql += whereClause + orderBy;
+//		sqlCount += whereClause;
+//
+////		System.out.println(sql);
+//
+//		Query q = manager.createQuery(sql, OrderHisDto.class);
+//		Query qCount = manager.createQuery(sqlCount);
+//
+//		int startPosition = pageIndex * pageSize;
+//		q.setFirstResult(startPosition);
+//		q.setMaxResults(pageSize);
+//
+//		@SuppressWarnings("unchecked")
+//		List<OrderHisDto> entities = q.getResultList();
+//
+//		long count = (long) qCount.getSingleResult();
+//		Pageable pageable = PageRequest.of(pageIndex, pageSize);
+//
+//		List<OrderHisDto> orderDtos = new ArrayList<>();
+//		for (OrderHisDto o : entities) {
+//			Order order = orderRepository.getById(o.getId());
+//			Integer quantity = order.getOrderDetails().size() - 1;
+//			if (quantity > 0) {
+//				o.setDescription(
+//						order.getOrderDetails().get(0).getProduct().getName() + " và " + quantity + " sản phẩm khác");
+//			} else {
+//				o.setDescription(order.getOrderDetails().get(0).getProduct().getName());
+//			}
+//			if (dto != null) {
+//				orderDtos.add(o);
+//			}
+//		}
+//
+//		Page<OrderHisDto> result = new PageImpl<OrderHisDto>(entities, pageable, count);
+//		return result;}
+
+
+
 }
