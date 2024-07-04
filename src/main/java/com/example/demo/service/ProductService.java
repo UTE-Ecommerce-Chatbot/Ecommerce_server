@@ -20,7 +20,10 @@ public interface ProductService {
 	
 	// Lấy các sản phẩm hiển thị lên trang chủ, có trạng thái hiển thị là 1
 	public Page<ProductListDto> productList(SearchDto dto);
-	
+
+	public Page<ProductListDto> productList2(SearchDto dto);
+
+
 	// lấy toàn bộ sản phẩm trong csdl
 	public Page<ProductListDto> getAllProduct(AdvanceSearchDto dto);
 	

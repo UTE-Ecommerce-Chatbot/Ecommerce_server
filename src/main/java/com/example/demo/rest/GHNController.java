@@ -174,12 +174,13 @@ public class GHNController {
 //        json.put("coupon", Optional.ofNullable(null)); // Add this field if it's required
 
         // 2. Construct the POST Request
+
+
+//      3. Set the JSON Payload
         HttpPost post = new HttpPost(CALCULATE_SHIP_FEE_URL);
         post.addHeader("Content-Type", "application/json");
         post.addHeader("Token", TOKEN);
         post.addHeader("ShopId", SHOP_ID.toString());
-
-//      3. Set the JSON Payload
         StringEntity entity = new StringEntity(json.toString());
         post.setEntity(entity);
 //        URI uri = new URIBuilder(get.getURI()).setParameters(params).build();

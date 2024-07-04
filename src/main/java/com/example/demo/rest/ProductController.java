@@ -62,24 +62,60 @@ public class ProductController {
 		return new ResponseEntity<Page<ProductListDto>>(result, HttpStatus.OK);
 	}
 
-	@GetMapping(value = "/search/v2")
-	public ResponseEntity<Page<ProductListDto>> searchByRequired(@RequestParam(name = "page", defaultValue = "1") int page,
-															 @RequestParam(name = "limit", defaultValue = "24") int limit,
-															 @RequestParam(name = "keyword", defaultValue = "") String keyword,
-															 @RequestParam(name = "sortBy", defaultValue = "createdDate") String sortBy,
-															 @RequestParam(name = "sortValue", defaultValue = "DESC") String sortValue,
-															 @RequestParam(name = "brand", defaultValue = "") String brand,
-															 @RequestParam(name = "price", defaultValue = "") String price,
-																 @RequestParam(name = "category", defaultValue="") String category) {
-		SearchDto dto = new SearchDto(page, limit, keyword);
-		dto.setSortBy(sortBy);
-		dto.setSortValue(sortValue);
-		dto.setBrand(brand);
-		dto.setPrice(price);
-		dto.setCategory(category);
-		Page<ProductListDto> result = service.productList(dto);
-		return new ResponseEntity<Page<ProductListDto>>(result, HttpStatus.OK);
-	}
+//	@GetMapping(value = "/search/v2")
+//	public ResponseEntity<Page<ProductListDto>> searchByRequired(@RequestParam(name = "page", defaultValue = "1") int page,
+//															 @RequestParam(name = "limit", defaultValue = "24") int limit,
+//															 @RequestParam(name = "keyword", defaultValue = "") String keyword,
+//															 @RequestParam(name = "sortBy", defaultValue = "createdDate") String sortBy,
+//															 @RequestParam(name = "sortValue", defaultValue = "DESC") String sortValue,
+//															 @RequestParam(name = "brand", defaultValue = "") String brand,
+//															 @RequestParam(name = "price", defaultValue = "") String price,
+//																 @RequestParam(name = "category", defaultValue="") String category) {
+//		SearchDto dto = new SearchDto(page, limit, keyword);
+//		dto.setSortBy(sortBy);
+//		dto.setSortValue(sortValue);
+//		dto.setBrand(brand);
+//		dto.setPrice(price);
+//		dto.setCategory(category);
+//		Page<ProductListDto> result = service.productList(dto);
+//		return new ResponseEntity<Page<ProductListDto>>(result, HttpStatus.OK);
+//	}
+@GetMapping(value = "/search/v2")
+public ResponseEntity<Page<ProductListDto>> searchByRequired(
+		@RequestParam(name = "page", defaultValue = "1") int page,
+		@RequestParam(name = "limit", defaultValue = "24") int limit,
+		@RequestParam(name = "keyword", defaultValue = "") String keyword,
+		@RequestParam(name = "sortBy", defaultValue = "createdDate") String sortBy,
+		@RequestParam(name = "sortValue", defaultValue = "DESC") String sortValue,
+		@RequestParam(name = "brand", defaultValue = "") String brand,
+		@RequestParam(name = "price", defaultValue = "") String price,
+		@RequestParam(name = "category", defaultValue = "") String category,
+		@RequestParam(name = "subcategory", defaultValue = "") String subcategory,
+		@RequestParam(name = "ram", defaultValue = "") String ram,
+		@RequestParam(name = "resolution", defaultValue = "") String resolution,
+		@RequestParam(name = "image", defaultValue = "") String image,
+		@RequestParam(name = "video", defaultValue = "") String video,
+		@RequestParam(name = "is3DTV", defaultValue = "") Integer is3DTV,
+		@RequestParam(name = "isSmartTV", defaultValue = "") Integer isSmartTV) {
+
+	SearchDto dto = new SearchDto(page, limit, keyword);
+	dto.setSortBy(sortBy);
+	dto.setSortValue(sortValue);
+	dto.setBrand(brand);
+	dto.setPrice(price);
+	dto.setCategory(category);
+	dto.setSubcategory(subcategory);
+	dto.setRam(ram);
+	dto.setResolution(resolution);
+	dto.setImage(image);
+	dto.setVideo(video);
+	dto.setIs3DTV(is3DTV);
+	dto.setIsSmartTV(isSmartTV);
+
+	Page<ProductListDto> result = service.productList2(dto);
+	return new ResponseEntity<>(result, HttpStatus.OK);
+}
+
 
 
 	// lấy toàn bộ sản phẩm có trạng thái 1 theo danh mục

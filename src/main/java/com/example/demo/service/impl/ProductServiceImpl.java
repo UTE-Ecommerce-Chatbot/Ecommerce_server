@@ -1,9 +1,7 @@
 package com.example.demo.service.impl;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -56,6 +54,10 @@ import com.example.demo.repository.TiviRepository;
 import com.example.demo.repository.WashRepository;
 import com.example.demo.service.ProductService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 @Service
 public class ProductServiceImpl implements ProductService {
 
@@ -76,7 +78,7 @@ public class ProductServiceImpl implements ProductService {
 
 	@Autowired
 	private BrandRepository brandRepos;
-	
+
 	@Autowired
 	private SupplierRepository supplierRepos;
 
@@ -91,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
 
 	@Autowired
 	private WashRepository washRepos;
-	
+
 	@Autowired
 	private AccessoryRepository accessoryRepos;
 
@@ -100,15 +102,17 @@ public class ProductServiceImpl implements ProductService {
 
 	@Autowired
 	private OrderDetailRepository orderDetailRepos;
-	
+
 	@Autowired
 	private ColorRepository colorRepos;
-	
+
 	@Autowired
 	private ProductDiscountRepository discountRepos;
-	
-//	@Autowired
-//	private TagRepository tagRepos;
+
+	// @Autowired
+	// private TagRepository tagRepos;
+	Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class); // Thay YourClassName bằng tên lớp của bạn
+
 
 	@Override
 	public Page<ProductListDto> productList(SearchDto dto) {
@@ -124,28 +128,39 @@ public class ProductServiceImpl implements ProductService {
 		String sqlCount = "select count(entity.id) from  Product as entity where (1=1) ";
 		String sql = "select new com.example.demo.dto.product.ProductListDto(entity) from  Product as entity where entity.display=1 AND (1=1)  ";
 		if (dto.getKeyword() != null && StringUtils.hasText(dto.getKeyword())) {
-			
-			if(dto.getKeyword().contains(" ")) {
-//				String[] keywords = dto.getKeyword().split(" ");
-				whereClause += " AND ( entity.name LIKE " + "'" + dto.getKeyword() + "'" + " OR entity.description LIKE "+ "'" + dto.getKeyword()+ "'"
-						+ " OR entity.slug LIKE "+ "'" + dto.getKeyword()+ "'" + " OR entity.category.name LIKE "+ "'" + dto.getKeyword()+ "'" + " OR entity.category.code LIKE " + "'"+ dto.getKeyword()+ "'"
-						+ " OR entity.subcategory.name LIKE " + "'"+ dto.getKeyword() + "'"+ " OR entity.subcategory.code LIKE " + "'"+ dto.getKeyword()+ "')";
-//				whereClause += " AND ( entity.name LIKE " + "'" + keywords[0] + "'" + " OR entity.description LIKE "+ "'" + keywords[0]+ "'"
-//						+ " OR entity.slug LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.name LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.code LIKE " + "'"+ keywords[0]+ "'"
-//						+ " OR entity.subcategory.name LIKE " + "'"+ keywords[0] + "'"+ " OR entity.subcategory.code LIKE " + "'"+ keywords[0]+ "'";
-//				for(int i = 1; i < keywords.length; i++) {
-//					whereClause += " or entity.name LIKE " + "'" +  keywords[i]+ "'" + " OR entity.description LIKE "+ "'" + keywords[i]+ "'"
-//							+ " OR entity.slug LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.name LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.code LIKE "+ "'" + keywords[i]+ "'"
-//							+ " OR entity.subcategory.name LIKE "+ "'" + keywords[i]+ "'" + " OR entity.subcategory.code LIKE "+ "'" + keywords[i]+ "'" ;
-//				}
-//				whereClause += " ) ";
+
+			if (dto.getKeyword().contains(" ")) {
+				// String[] keywords = dto.getKeyword().split(" ");
+				whereClause += " AND ( entity.name LIKE " + "'" + dto.getKeyword() + "'"
+						+ " OR entity.description LIKE " + "'" + dto.getKeyword() + "'"
+						+ " OR entity.slug LIKE " + "'" + dto.getKeyword() + "'" + " OR entity.category.name LIKE "
+						+ "'" + dto.getKeyword() + "'" + " OR entity.category.code LIKE " + "'" + dto.getKeyword() + "'"
+						+ " OR entity.subcategory.name LIKE " + "'" + dto.getKeyword() + "'"
+						+ " OR entity.subcategory.code LIKE " + "'" + dto.getKeyword() + "')";
+				// whereClause += " AND ( entity.name LIKE " + "'" + keywords[0] + "'" + " OR
+				// entity.description LIKE "+ "'" + keywords[0]+ "'"
+				// + " OR entity.slug LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.name
+				// LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.code LIKE " + "'"+
+				// keywords[0]+ "'"
+				// + " OR entity.subcategory.name LIKE " + "'"+ keywords[0] + "'"+ " OR
+				// entity.subcategory.code LIKE " + "'"+ keywords[0]+ "'";
+				// for(int i = 1; i < keywords.length; i++) {
+				// whereClause += " or entity.name LIKE " + "'" + keywords[i]+ "'" + " OR
+				// entity.description LIKE "+ "'" + keywords[i]+ "'"
+				// + " OR entity.slug LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.name
+				// LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.code LIKE "+ "'" +
+				// keywords[i]+ "'"
+				// + " OR entity.subcategory.name LIKE "+ "'" + keywords[i]+ "'" + " OR
+				// entity.subcategory.code LIKE "+ "'" + keywords[i]+ "'" ;
+				// }
+				// whereClause += " ) ";
 			} else {
 				whereClause += " AND ( entity.name LIKE :text " + "OR entity.description LIKE :text "
 						+ "OR entity.slug LIKE :text " + "OR entity.slug LIKE :text "
 						+ "OR entity.category.name LIKE :text " + "OR entity.category.code LIKE :text "
 						+ "OR entity.subcategory.name LIKE :text " + "OR entity.subcategory.code LIKE :text )";
 			}
-			
+
 		}
 
 		if (dto.getCategory() != null) {
@@ -154,19 +169,19 @@ public class ProductServiceImpl implements ProductService {
 		if (dto.getSubcategory() != null) {
 			whereClause += " AND ( entity.subcategory.code LIKE :subcategory )";
 		}
-		
+
 		if (dto.getRam() != null && StringUtils.hasText(dto.getRam())) {
 			whereClause += " AND ( entity.technology.ram = :ram )";
 		} else {
 			whereClause += "";
 		}
-		
+
 		if (dto.getResolution() != null && StringUtils.hasText(dto.getResolution())) {
 			whereClause += " AND ( entity.technology.display_resolution = :resolution )";
 		} else {
 			whereClause += "";
 		}
-		
+
 		if (dto.getImage() != null && StringUtils.hasText(dto.getImage())) {
 			whereClause += " AND ( entity.camera.image_quality = :image )";
 		} else {
@@ -177,7 +192,7 @@ public class ProductServiceImpl implements ProductService {
 		} else {
 			whereClause += "";
 		}
-		
+
 		if (dto.getIs3DTV() != null) {
 			whereClause += " AND ( entity.tivi.is3D = :is_3d )";
 		} else {
@@ -188,7 +203,7 @@ public class ProductServiceImpl implements ProductService {
 		} else {
 			whereClause += "";
 		}
-		
+
 		if (dto.getBrand() != null && StringUtils.hasText(dto.getBrand())) {
 			if (dto.getBrand().contains(",")) {
 				String[] s = dto.getBrand().split(",");
@@ -214,19 +229,19 @@ public class ProductServiceImpl implements ProductService {
 
 		sql += whereClause + orderBy;
 		sqlCount += whereClause;
-//		System.out.println(sql);
+		// System.out.println(sql);
 
 		Query q = manager.createQuery(sql, ProductListDto.class);
 		Query qCount = manager.createQuery(sqlCount);
 
 		if (dto.getKeyword() != null && StringUtils.hasText(dto.getKeyword())) {
-			if(dto.getKeyword().contains(" ")) {
-				
+			if (dto.getKeyword().contains(" ")) {
+
 			} else {
 				q.setParameter("text", '%' + dto.getKeyword() + '%');
 				qCount.setParameter("text", '%' + dto.getKeyword() + '%');
 			}
-			
+
 		}
 
 		if (dto.getCategory() != null) {
@@ -238,7 +253,7 @@ public class ProductServiceImpl implements ProductService {
 			q.setParameter("subcategory", dto.getSubcategory());
 			qCount.setParameter("subcategory", dto.getSubcategory());
 		}
-		
+
 		if (dto.getRam() != null && StringUtils.hasText(dto.getRam())) {
 			q.setParameter("ram", dto.getRam());
 			qCount.setParameter("ram", dto.getRam());
@@ -247,7 +262,7 @@ public class ProductServiceImpl implements ProductService {
 			q.setParameter("resolution", dto.getResolution());
 			qCount.setParameter("resolution", dto.getResolution());
 		}
-		
+
 		if (dto.getImage() != null && StringUtils.hasText(dto.getImage())) {
 			q.setParameter("image", dto.getImage());
 			qCount.setParameter("image", dto.getImage());
@@ -256,7 +271,7 @@ public class ProductServiceImpl implements ProductService {
 			q.setParameter("video", dto.getVideo());
 			qCount.setParameter("video", dto.getVideo());
 		}
-		
+
 		if (dto.getIs3DTV() != null) {
 			q.setParameter("is_3d", dto.getIs3DTV());
 			qCount.setParameter("is_3d", dto.getIs3DTV());
@@ -292,6 +307,122 @@ public class ProductServiceImpl implements ProductService {
 		Pageable pageable = PageRequest.of(pageIndex, pageSize);
 		Page<ProductListDto> result = new PageImpl<ProductListDto>(entities, pageable, count);
 		return result;
+	}
+
+	@Override
+	public Page<ProductListDto> productList2(SearchDto dto) {
+		int pageIndex = Math.max(dto.getPageIndex() - 1, 0); // Ensure pageIndex is non-negative
+		int pageSize = dto.getPageSize();
+
+		StringBuilder whereClause = new StringBuilder(" WHERE entity.display=1 ");
+		String orderBy = " ORDER BY entity." + dto.getSortBy() + " " + dto.getSortValue();
+		String sqlCount = "SELECT COUNT(entity.id) FROM Product entity JOIN entity.brand brand";
+		String sql = "SELECT new com.example.demo.dto.product.ProductListDto(entity) " +
+				"FROM Product entity JOIN entity.brand brand";
+
+		Map<String, Object> parameters = new HashMap<>();
+
+		if (dto.getKeyword() != null && StringUtils.hasText(dto.getKeyword())) {
+			String keyword = "%" + dto.getKeyword() + "%";
+			whereClause.append(" AND (entity.name LIKE :text OR entity.description LIKE :text " +
+					"OR entity.slug LIKE :text OR entity.category.name LIKE :text " +
+					"OR entity.category.code LIKE :text OR entity.subcategory.name LIKE :text " +
+					"OR entity.subcategory.code LIKE :text)");
+			parameters.put("text", keyword);
+		}
+
+		if (dto.getCategory() != null && !Objects.equals(dto.getCategory(), "")) {
+			whereClause.append(" AND entity.category.code LIKE :category");
+			parameters.put("category", dto.getCategory());
+		}
+
+
+		if (StringUtils.hasText(dto.getRam())) {
+			whereClause.append(" AND entity.technology.ram = :ram");
+			parameters.put("ram", dto.getRam());
+		}
+
+		if (StringUtils.hasText(dto.getResolution())) {
+			whereClause.append(" AND entity.technology.display_resolution = :resolution");
+			parameters.put("resolution", dto.getResolution());
+		}
+
+		if (StringUtils.hasText(dto.getImage())) {
+			whereClause.append(" AND entity.camera.image_quality = :image");
+			parameters.put("image", dto.getImage());
+		}
+
+		if (StringUtils.hasText(dto.getVideo())) {
+			whereClause.append(" AND entity.camera.video_quality = :video");
+			parameters.put("video", dto.getVideo());
+		}
+
+		if (dto.getIs3DTV() != null) {
+			whereClause.append(" AND entity.tivi.is3D = :is_3d");
+			parameters.put("is_3d", dto.getIs3DTV());
+		}
+
+		if (dto.getIsSmartTV() != null) {
+			whereClause.append(" AND entity.tivi.type_tv = :is_smart");
+			parameters.put("is_smart", dto.getIsSmartTV());
+		}
+
+		if (StringUtils.hasText(dto.getBrand())) {
+			if (dto.getBrand().contains(",")) {
+				String[] brands = dto.getBrand().split(",");
+				whereClause.append(" AND brand.name IN (:brands)");
+				parameters.put("brands", Arrays.asList(brands));
+			} else {
+				whereClause.append(" AND brand.name = :brand");
+				parameters.put("brand", dto.getBrand());
+			}
+		}
+
+		if (StringUtils.hasText(dto.getPrice())) {
+			String[] priceRange = dto.getPrice().split(",");
+			Long begin = Long.parseLong(priceRange[0]);
+			Long end = Long.parseLong(priceRange[1]);
+			whereClause.append(" AND entity.price BETWEEN :begin AND :end");
+			parameters.put("begin", begin);
+			parameters.put("end", end);
+		}
+
+		sql += whereClause + orderBy;
+		sqlCount += whereClause;
+
+		// In câu SQL trước khi thực hiện
+		logger.info("Executing SQL query: {}", sql);
+		logger.info("Parameters: {}", parameters); // Thêm log cho các tham số
+
+		Query q = manager.createQuery(sql, ProductListDto.class);
+		Query qCount = manager.createQuery(sqlCount);
+
+
+		parameters.forEach((key, value) -> {
+			q.setParameter(key, value);
+			qCount.setParameter(key, value);
+		});
+
+		int startPosition = pageIndex * pageSize;
+		q.setFirstResult(startPosition);
+		q.setMaxResults(pageSize);
+
+		@SuppressWarnings("unchecked")
+		List<ProductListDto> entities = q.getResultList();
+		Integer sellerCount = 0;
+		for (ProductListDto item : entities) {
+			if (orderDetailRepos.countAllByProductId(item.getId()) != null) {
+				sellerCount += orderDetailRepos.countAllByProductId(item.getId());
+			} else {
+				sellerCount = 0;
+			}
+			item.setSeller_count(sellerCount);
+			sellerCount = 0;
+		}
+
+		long count = (long) qCount.getSingleResult();
+		Pageable pageable = PageRequest.of(pageIndex, pageSize);
+		return new PageImpl<>(entities, pageable, count);
 	}
 
 	@Override
@@ -344,7 +475,7 @@ public class ProductServiceImpl implements ProductService {
 		} else {
 			whereClause += "";
 		}
-		
+
 		if (dto.getSupplier() != null && StringUtils.hasText(dto.getSupplier())) {
 			if (dto.getSupplier().contains(",")) {
 				String[] s = dto.getSupplier().split(",");
@@ -384,7 +515,7 @@ public class ProductServiceImpl implements ProductService {
 			q.setParameter("brand", dto.getBrand());
 			qCount.setParameter("brand", dto.getBrand());
 		}
-		
+
 		if (dto.getSupplier() != null && dto.getSupplier().length() > 0 && dto.getSupplier().contains(",") == false) {
 			q.setParameter("supplier", dto.getSupplier());
 			qCount.setParameter("supplier", dto.getSupplier());
@@ -425,7 +556,7 @@ public class ProductServiceImpl implements ProductService {
 			Image image = null;
 			Inventory inventory = null;
 			ProductDiscount discount = null;
-//			Tag tag = null;
+			// Tag tag = null;
 
 			Category category = categoryRepos.findOneByCode(dto.getCategory());
 			SubCategory subcategory = subcategoryRepos.findOneByCode(dto.getSubcategory());
@@ -434,17 +565,17 @@ public class ProductServiceImpl implements ProductService {
 			// 1 - n product - image
 			List<String> imageUrls = dto.getImages();
 			List<Image> images = new ArrayList<>();
-			
+
 			List<String> color_names = dto.getColors();
 			List<Color> colors = new ArrayList<Color>();
-			for(String item : color_names) {
+			for (String item : color_names) {
 				Color color = colorRepos.findOneByName(item);
 				colors.add(color);
 			}
-			
-//			List<TagDto> tagNames = dto.getTags();
-//			List<Tag> tags = new ArrayList<>();
-			
+
+			// List<TagDto> tagNames = dto.getTags();
+			// List<Tag> tags = new ArrayList<>();
+
 			List<Inventory> inventories = new ArrayList<>();
 
 			if (dto.getId() != null) {
@@ -462,23 +593,23 @@ public class ProductServiceImpl implements ProductService {
 				}
 				discount = discountRepos.findOneByProduct(entity);
 				switch (entity.getType()) {
-				case 1:
-					tech = techRepos.findOneByProduct(entity);
-					break;
-				case 2:
-					camera = cameraRepos.findOneByProduct(entity);
-					break;
-				case 3:
-					tivi = tiviRepos.findOneByProduct(entity);
-					break;
-				case 4:
-					wash = washRepos.findOneByProduct(entity);
-					break;
-				case 5:
-					accessory = accessoryRepos.findOneByProduct(entity);
-					break;
-				default:
-					break;
+					case 1:
+						tech = techRepos.findOneByProduct(entity);
+						break;
+					case 2:
+						camera = cameraRepos.findOneByProduct(entity);
+						break;
+					case 3:
+						tivi = tiviRepos.findOneByProduct(entity);
+						break;
+					case 4:
+						wash = washRepos.findOneByProduct(entity);
+						break;
+					case 5:
+						accessory = accessoryRepos.findOneByProduct(entity);
+						break;
+					default:
+						break;
 				}
 
 			}
@@ -493,8 +624,8 @@ public class ProductServiceImpl implements ProductService {
 				accessory = new Accessory();
 				discount = new ProductDiscount();
 				discount.setStatus(1);
-				for(Color item : colors) {
-//					inventory = new Inventory(0, 0, entity, item, category.getCode());
+				for (Color item : colors) {
+					// inventory = new Inventory(0, 0, entity, item, category.getCode());
 					inventory = new Inventory();
 					inventory.setDisplay(1);
 					inventory.setCategory_code(category.getCode());
@@ -530,122 +661,122 @@ public class ProductServiceImpl implements ProductService {
 			entity.setBrand(brand);
 			entity.setSupplier(supplier);
 			entity.setDiscount(discount);
-			
-//			if (tagNames != null) {
-//				for (TagDto item : tagNames) {
-//					tag = tagRepos.getOneByCode(item.getCode());
-//					if (tag != null) {
-//						tags.add(tag);
-//					}
-//				}
-//			}
-			
+
+			// if (tagNames != null) {
+			// for (TagDto item : tagNames) {
+			// tag = tagRepos.getOneByCode(item.getCode());
+			// if (tag != null) {
+			// tags.add(tag);
+			// }
+			// }
+			// }
+
 			switch (dto.getType()) {
-			case 1:
-				// electric
-				tech.setScreen(dto.getScreen());
-				tech.setOperatorSystem(dto.getOperatorSystem());
-				tech.setRam(dto.getRam());
-				tech.setPin(dto.getPin());
-				tech.setDesign(dto.getDesign());
-				tech.setReleaseTime(dto.getReleaseTime());
-				tech.setScreen_size(dto.getScreen_size());
-				tech.setCamera(dto.getCamera());
-				tech.setDisplay_resolution(dto.getDisplay_resolution());
-				tech.setChip(dto.getChip());
+				case 1:
+					// electric
+					tech.setScreen(dto.getScreen());
+					tech.setOperatorSystem(dto.getOperatorSystem());
+					tech.setRam(dto.getRam());
+					tech.setPin(dto.getPin());
+					tech.setDesign(dto.getDesign());
+					tech.setReleaseTime(dto.getReleaseTime());
+					tech.setScreen_size(dto.getScreen_size());
+					tech.setCamera(dto.getCamera());
+					tech.setDisplay_resolution(dto.getDisplay_resolution());
+					tech.setChip(dto.getChip());
 
-				// phone
-				tech.setBehindCamera(dto.getBehindCamera());
-				tech.setFrontCamera(dto.getFrontCamera());
-				tech.setInternalMemory(dto.getInternalMemory());
-				tech.setSim(dto.getSim());
-				tech.setNumber_sim(dto.getNumber_sim());
-				tech.setAccessory(dto.getAccessory());
+					// phone
+					tech.setBehindCamera(dto.getBehindCamera());
+					tech.setFrontCamera(dto.getFrontCamera());
+					tech.setInternalMemory(dto.getInternalMemory());
+					tech.setSim(dto.getSim());
+					tech.setNumber_sim(dto.getNumber_sim());
+					tech.setAccessory(dto.getAccessory());
 
-				// laptop
-				tech.setCard(dto.getCard());
-				tech.setCpu(dto.getCpu());
-				tech.setHardWare(dto.getHardWare());
-				tech.setBus(dto.getBus());
-				tech.setProduct(entity);
-				break;
-			case 2:
-				camera.setModel(dto.getModel());
-				camera.setImage_processing(dto.getImage_processing());
-				camera.setImage_quality(dto.getImage_quality());
-				camera.setVideo_quality(dto.getVideo_quality());
-				camera.setMemory_card(dto.getMemory_card());
-				camera.setScreen_camera(dto.getScreen_camera());
-				camera.setScreen_size_camera(dto.getScreen_size_camera());
-				camera.setShutter_speed(dto.getShutter_speed());
-				camera.setProduct(entity);
-				break;
-			case 3:
-				tivi.setYear(dto.getYear());
-				tivi.setDisplay_resolution_tv(dto.getDisplay_resolution_tv());
-				tivi.setType_tv(dto.getType_tv());
-				tivi.setApp_avaiable(dto.getApp_avaiable());
-				tivi.setUsb(dto.getUsb());
-				tivi.setIs3D(dto.getIs3D());
-				tivi.setSpeaker(dto.getSpeaker());
-				tivi.setTechlonogy_sound(dto.getTechlonogy_sound());
-				tivi.setComponent_video(dto.getComponent_video());
-				tivi.setHdmi(dto.getHdmi());
-				tivi.setControl_by_phone(dto.getControl_by_phone());
-				tivi.setImage_processing_tv(dto.getImage_processing_tv());
-				tivi.setProduct(entity);
-				break;
-			case 4:
-				wash.setWash_weight(dto.getWash_weight());
-				wash.setWash_mode(dto.getWash_mode());
-				wash.setIs_fast(dto.getIs_fast());
-				wash.setWash_tub(dto.getWash_tub());
-				wash.setIs_inverter(dto.getIs_inverter());
-				wash.setType_engine(dto.getType_engine());
-				wash.setProduct(entity);
-				break;
-			case 5:
-				accessory.setAccessory_model(dto.getAccessory_model());
-				accessory.setFeatute(dto.getFeature());
-				accessory.setProduct(entity);
-				break;
-			default:
-				break;
+					// laptop
+					tech.setCard(dto.getCard());
+					tech.setCpu(dto.getCpu());
+					tech.setHardWare(dto.getHardWare());
+					tech.setBus(dto.getBus());
+					tech.setProduct(entity);
+					break;
+				case 2:
+					camera.setModel(dto.getModel());
+					camera.setImage_processing(dto.getImage_processing());
+					camera.setImage_quality(dto.getImage_quality());
+					camera.setVideo_quality(dto.getVideo_quality());
+					camera.setMemory_card(dto.getMemory_card());
+					camera.setScreen_camera(dto.getScreen_camera());
+					camera.setScreen_size_camera(dto.getScreen_size_camera());
+					camera.setShutter_speed(dto.getShutter_speed());
+					camera.setProduct(entity);
+					break;
+				case 3:
+					tivi.setYear(dto.getYear());
+					tivi.setDisplay_resolution_tv(dto.getDisplay_resolution_tv());
+					tivi.setType_tv(dto.getType_tv());
+					tivi.setApp_avaiable(dto.getApp_avaiable());
+					tivi.setUsb(dto.getUsb());
+					tivi.setIs3D(dto.getIs3D());
+					tivi.setSpeaker(dto.getSpeaker());
+					tivi.setTechlonogy_sound(dto.getTechlonogy_sound());
+					tivi.setComponent_video(dto.getComponent_video());
+					tivi.setHdmi(dto.getHdmi());
+					tivi.setControl_by_phone(dto.getControl_by_phone());
+					tivi.setImage_processing_tv(dto.getImage_processing_tv());
+					tivi.setProduct(entity);
+					break;
+				case 4:
+					wash.setWash_weight(dto.getWash_weight());
+					wash.setWash_mode(dto.getWash_mode());
+					wash.setIs_fast(dto.getIs_fast());
+					wash.setWash_tub(dto.getWash_tub());
+					wash.setIs_inverter(dto.getIs_inverter());
+					wash.setType_engine(dto.getType_engine());
+					wash.setProduct(entity);
+					break;
+				case 5:
+					accessory.setAccessory_model(dto.getAccessory_model());
+					accessory.setFeatute(dto.getFeature());
+					accessory.setProduct(entity);
+					break;
+				default:
+					break;
 			}
 
 			entity.setImages(images);
-//			entity.setTags(tags);
+			// entity.setTags(tags);
 			entity.setInventories(inventories);
 			for (int i = 0; i < images.size(); i++) {
 				images.get(i).setProduct(entity);
 			}
-			
+
 			entity = productRepos.save(entity);
 			entity.setDiscount(discount);
 			discount.setProduct(entity);
 			switch (dto.getType()) {
-			case 1:
-				entity.setTechnology(tech);
-				tech = techRepos.save(tech);
-				break;
-			case 2:
-				entity.setCamera(camera);
-				camera = cameraRepos.save(camera);
-				break;
-			case 3:
-				entity.setTivi(tivi);
-				tivi = tiviRepos.save(tivi);
-				break;
-			case 4:
-				entity.setWash(wash);
-				wash = washRepos.save(wash);
-				break;
-			case 5:
-				entity.setAccessory(accessory);
-				accessory = accessoryRepos.save(accessory);
-				break;
-			default:
-				break;
+				case 1:
+					entity.setTechnology(tech);
+					tech = techRepos.save(tech);
+					break;
+				case 2:
+					entity.setCamera(camera);
+					camera = cameraRepos.save(camera);
+					break;
+				case 3:
+					entity.setTivi(tivi);
+					tivi = tiviRepos.save(tivi);
+					break;
+				case 4:
+					entity.setWash(wash);
+					wash = washRepos.save(wash);
+					break;
+				case 5:
+					entity.setAccessory(accessory);
+					accessory = accessoryRepos.save(accessory);
+					break;
+				default:
+					break;
 			}
 			if (entity != null) {
 				return new ProductDto(entity);
@@ -673,7 +804,7 @@ public class ProductServiceImpl implements ProductService {
 	public ProductDtoRes getProductById(Long id, String color) {
 		Product product = productRepos.getById(id);
 		Color c = null;
-		if(color != null &&color.equalsIgnoreCase("") == false) {
+		if (color != null && color.equalsIgnoreCase("") == false) {
 			c = colorRepos.findOneByName(color);
 		} else {
 			c = colorRepos.findOneByName(product.getInventories().get(0).getColor().getName());
@@ -689,7 +820,7 @@ public class ProductServiceImpl implements ProductService {
 		Product product = productRepos.getById(id);
 		ProductDto dto = new ProductDto(product);
 		List<String> colors = new ArrayList<>();
-		for(Inventory item : product.getInventories()) {
+		for (Inventory item : product.getInventories()) {
 			colors.add(item.getColor().getName());
 		}
 		dto.setColors(colors);
@@ -730,7 +861,6 @@ public class ProductServiceImpl implements ProductService {
 		return dtos;
 	}
 
-
 	// Author: Nguyen Phuc Tien
 	@Override
 	public Page<ProductTopSale> topSaleProduct(SearchDto dto) {
@@ -762,8 +892,8 @@ public class ProductServiceImpl implements ProductService {
 
 		@SuppressWarnings("unchecked")
 		List<ProductTopSale> entities = q.getResultList();
-		
-		for(ProductTopSale item : entities) {
+
+		for (ProductTopSale item : entities) {
 			if (item.getPrice() != null && item.getList_price() != null) {
 				item.setPercent_discount(CalculateDiscount.countDiscount(item.getPrice(), item.getList_price()));
 			} else {
