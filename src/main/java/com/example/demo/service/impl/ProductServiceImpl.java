@@ -730,6 +730,8 @@ public class ProductServiceImpl implements ProductService {
 		return dtos;
 	}
 
+
+	// Author: Nguyen Phuc Tien
 	@Override
 	public Page<ProductTopSale> topSaleProduct(SearchDto dto) {
 		int pageIndex = dto.getPageIndex();

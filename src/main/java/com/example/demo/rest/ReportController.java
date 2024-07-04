@@ -32,11 +32,13 @@ import com.example.demo.dto.SearchDto;
 import com.example.demo.dto.order.OrderHisDto;
 import com.example.demo.dto.order.OrderResponse;
 import com.example.demo.dto.order.TotalOrderDto;
+import com.example.demo.dto.other.PromotionDto;
 import com.example.demo.dto.product.ProductListDto;
 import com.example.demo.dto.report.ReportBrand;
 import com.example.demo.dto.report.ReportCategory;
 import com.example.demo.dto.report.ReportComment;
 import com.example.demo.dto.report.ReportCustomer;
+import com.example.demo.dto.report.ReportDaily;
 import com.example.demo.dto.report.ReportProduct;
 import com.example.demo.dto.report.ReportProductInventory;
 import com.example.demo.dto.report.ReportProductOrder;
@@ -46,10 +48,12 @@ import com.example.demo.entity.user.User;
 import com.example.demo.repository.InventoryDetailRepository;
 import com.example.demo.repository.InventoryRepository;
 import com.example.demo.repository.OrderRepository;
+import com.example.demo.repository.PromotionRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.CommentService;
 import com.example.demo.service.OrderService;
 import com.example.demo.service.ProductService;
+import com.example.demo.service.PromotionService;
 import com.example.demo.service.ReportService;
 import org.springframework.data.domain.Sort;
 
@@ -73,6 +77,9 @@ public class ReportController {
 
 	@Autowired
 	private UserRepository userRepos;
+
+	@Autowired
+	private PromotionService promotionService;
 
 	@Autowired
 	private OrderRepository orderRepos;
@@ -100,6 +107,7 @@ public class ReportController {
 
 		List<OrderResponse> list = new ArrayList<OrderResponse>();
 		Integer count_complete = 0, count_shiping = 0, count_wait = 0, count_cancel = 0;
+		Integer totalOrder = (int) result.getTotalElements();
 		for (OrderHisDto item : result.toList()) {
 			if (item.getStatus_order() == 3) {
 				count_complete += 1;
@@ -111,6 +119,7 @@ public class ReportController {
 				count_cancel += 1;
 			}
 		}
+
 		list.add(new OrderResponse("Đã hoàn thành", count_complete > 0 ? count_complete : 0));
 		list.add(new OrderResponse("Đang giao hàng", count_shiping > 0 ? count_shiping : 0));
 		list.add(new OrderResponse("Đang chờ xác nhận", count_wait > 0 ? count_wait : 0));
@@ -119,10 +128,12 @@ public class ReportController {
 				(int) Math.round(CalculateDiscount.calPercent(count_cancel, result.getTotalElements()))));
 		list.add(new OrderResponse("Tỉ lệ thành công (%)",
 				(int) Math.round(CalculateDiscount.calPercent(count_complete, result.getTotalElements()))));
+		list.add(new OrderResponse("Tổng số lượng đơn", totalOrder));
+
 		return new ResponseEntity<List<OrderResponse>>(list, HttpStatus.OK);
 	}
 
-	// đếm số lượng đơn hàng theo trạng thái đơn hàng
+	// đếm số lượng đơn hàng theo trạng thái đơn hàng của người dùng
 	@GetMapping("/seller/count/{username}")
 	// @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SELLER')")
 	public ResponseEntity<List<OrderResponse>> getQuantityByStatusSellerByAdmin(
@@ -618,29 +629,46 @@ public class ReportController {
 		return new ResponseEntity<List<TotalOrderDto>>(totalOrderDtoList, HttpStatus.OK);
 
 	}
-//	@GetMapping("/revenue/base-time")
-//	public ResponseEntity<Map<String, BigDecimal>> getRevenueBaseTime(
-//			@RequestParam(name = "last_date", defaultValue = "0") Integer last_date) {
-//		Map<String, BigDecimal> result = new LinkedHashMap<>();
-//
-//		if (last_date == 0) {
-//			// If last_date is 0, get revenue for each hour of the current day
-//			for (int hour = 0; hour < 24; hour++) {
-//				LocalDateTime start_time = LocalDateTime.now().withHour(hour).withMinute(0).withSecond(0);
-//				LocalDateTime end_time = start_time.plusHours(1);
-//				BigDecimal revenue = orderService.getTotalRevenue(start_time, end_time);
-//				result.put(String.format("%02d:00 - %02d:00", hour, hour + 1), revenue);
-//			}
-//		} else {
-//			// If last_date is not 0, get revenue for each day within the last_date days
-//			for (int day = 0; day < last_date; day++) {
-//				LocalDateTime start_time = LocalDateTime.now().minusDays(day).withHour(0).withMinute(0).withSecond(0);
-//				LocalDateTime end_time = start_time.plusDays(1);
-//				BigDecimal revenue = orderService.getTotalRevenue(start_time, end_time);
-//				result.put(start_time.toLocalDate().toString(), revenue);
-//			}
-//		}
-//
-//		return new ResponseEntity<Map<String, BigDecimal>>(result, HttpStatus.OK);
-//	}
+
+	@GetMapping("/daily-report")
+	public ResponseEntity<ReportDaily> getDailyReport() {
+		LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+		LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+		OrderResponse totalProductSales = getOrderResponseByType(1, 1000, 2);
+		OrderResponse totalDailyIncome = getOrderResponseByType(1);
+		OrderResponse totalOrders = getOrderResponseByStatus(0, 1000, 1, 4);
+		List<PromotionDto> promotions = promotionService.getListDisplay();
+
+		if (totalProductSales == null || totalDailyIncome == null || totalOrders == null) {
+			// Xử lý trường hợp không lấy được dữ liệu
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		int totalDiscounts = promotions.size();
+		return new ResponseEntity<>(new ReportDaily(
+				totalOrders.getQuantity(),
+				(int) totalProductSales.getQuantity(),
+				totalDailyIncome.getRevenue(),
+				totalDiscounts), HttpStatus.OK);
+	}
+
+	private OrderResponse getOrderResponseByType(int type, int limit, int status) {
+		ResponseEntity<List<OrderResponse>> response = countByType(type, limit, "", "", "", "", "", status);
+		List<OrderResponse> list = response.getBody();
+		return list != null && !list.isEmpty() ? list.get(0) : null;
+	}
+
+	private OrderResponse getOrderResponseByType(int type) {
+		ResponseEntity<List<OrderResponse>> response = reportRevenue(type);
+		List<OrderResponse> list = response.getBody();
+		return list != null && !list.isEmpty() ? list.get(0) : null;
+	}
+
+	private OrderResponse getOrderResponseByStatus(int pages, int limit, int last_date, int status) {
+		ResponseEntity<List<OrderResponse>> response = getQuantityByStatus(pages, limit, last_date, status);
+		List<OrderResponse> list = response.getBody();
+		return list != null && !list.isEmpty() ? list.get(0) : null;
+	}
+
 }

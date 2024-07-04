@@ -8,11 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -48,7 +44,7 @@ public class GHNController {
 //    public static final String TOKEN = "d3d4b907-2781-11ec-b8c6-fade198b4859";
 //    public static final Integer SHOP_ID = 82605;
     public static final String TOKEN = "c4376de6-e5f5-11ee-b1d4-92b443b7a897";
-    public static final Integer SHOP_ID = 190766;
+    public static final Integer SHOP_ID = 190370;
     public static final String API_ENDPOINT = "https://dev-online-gateway.ghn.vn/shiip/public-api";
     public static final String CREATE_ORDER_URL = API_ENDPOINT + "/v2/shipping-order/create";
     public static final String CALCULATE_TIME_SHIP_URL = API_ENDPOINT + "/v2/shipping-order/leadtime";
@@ -146,30 +142,54 @@ public class GHNController {
                                                             @RequestParam Integer service_id, @RequestParam Integer to_district_id, @RequestParam String to_ward_code,
                                                             @RequestParam(required =false) Integer height, @RequestParam(required =false) Integer length, @RequestParam(required =false) Integer weight,
                                                             @RequestParam(required =false) Integer width, @RequestParam(required =false) Integer value) throws ClientProtocolException, IOException, URISyntaxException {
+//        JSONObject json = new JSONObject();
+//        json.put("from_district_id", from_district_id);
+//        json.put("service_id", service_id);
+//        json.put("to_district_id", to_district_id);
+//        json.put("to_ward_code", to_ward_code);
+//        json.put("height", height);
+//        json.put("length", length);
+//        json.put("weight", weight);
+//        json.put("width", width);
+//        json.put("insurance_value", value);
+//        CloseableHttpClient client = HttpClients.createDefault();
+//        HttpGet get = new HttpGet(CALCULATE_SHIP_FEE_URL);
+//        List<NameValuePair> params = new ArrayList<>();
+//        for (Map.Entry<String, Object> e : json.toMap().entrySet()) {
+//            params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
+//        }
         JSONObject json = new JSONObject();
         json.put("from_district_id", from_district_id);
+        json.put("from_ward_code","21808");
         json.put("service_id", service_id);
+//        json.put("service_type_id", Optional.ofNullable(null));
         json.put("to_district_id", to_district_id);
         json.put("to_ward_code", to_ward_code);
         json.put("height", height);
         json.put("length", length);
         json.put("weight", weight);
         json.put("width", width);
-        json.put("insurance_value", value);
+        json.put("insurance_value", value); // Assuming this is insurance_value
+        json.put("cod_failed_amount", 2000); // Add this field if it's required
+//        json.put("coupon", Optional.ofNullable(null)); // Add this field if it's required
+
+        // 2. Construct the POST Request
+        HttpPost post = new HttpPost(CALCULATE_SHIP_FEE_URL);
+        post.addHeader("Content-Type", "application/json");
+        post.addHeader("Token", TOKEN);
+        post.addHeader("ShopId", SHOP_ID.toString());
+
+//      3. Set the JSON Payload
+        StringEntity entity = new StringEntity(json.toString());
+        post.setEntity(entity);
+//        URI uri = new URIBuilder(get.getURI()).setParameters(params).build();
+//        get.setURI(uri);
+//        get.addHeader("token", TOKEN);
+//        get.setHeader("shopid", SHOP_ID.toString());
+
+        System.out.println(post);
         CloseableHttpClient client = HttpClients.createDefault();
-        HttpGet get = new HttpGet(CALCULATE_SHIP_FEE_URL);
-        List<NameValuePair> params = new ArrayList<>();
-        for (Map.Entry<String, Object> e : json.toMap().entrySet()) {
-            params.add(new BasicNameValuePair(e.getKey(), e.getValue().toString()));
-        }
-
-        URI uri = new URIBuilder(get.getURI()).setParameters(params).build();
-        get.setURI(uri);
-        get.setHeader("token", TOKEN);
-        get.setHeader("shopid", SHOP_ID.toString());
-
-        System.out.println(get);
-        CloseableHttpResponse res = client.execute(get);
+        CloseableHttpResponse res = client.execute(post);
         BufferedReader rd = new BufferedReader(new InputStreamReader(res.getEntity().getContent()));
         StringBuilder resultJsonStr = new StringBuilder();
         String line;
@@ -177,19 +197,25 @@ public class GHNController {
             resultJsonStr.append(line);
         }
         JSONObject result = new JSONObject(resultJsonStr.toString());
-
-//        JSONObject fee = (JSONObject) result.get("data");
+        //        JSONObject fee = (JSONObject) result.get("data");
         JSONObject fee = result.optJSONObject("data");
+
 //        System.out.println("RESULT TEST "+ result);
-//
 //        System.out.println(fee.get("service_fee"));
 //        System.out.println("DATA TEST "+ fee);
+
+        String message = result.get("message").toString();
+        Integer code = (Integer) result.get("code");
+
+
+
+        System.out.println(code);
+        System.out.println(message);
 
         Long only_ship_fee = Long.parseLong(fee.get("service_fee").toString());
         Long total_ship_fee = Long.parseLong(fee.get("total").toString());
         Long insurance_fee = Long.parseLong(fee.get("insurance_fee").toString());
-        String message = result.get("message").toString();
-        Integer code = (Integer) result.get("code");
+
         Boolean success;
         if (code == 200)
             success = true;

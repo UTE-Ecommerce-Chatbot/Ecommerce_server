@@ -62,6 +62,26 @@ public class ProductController {
 		return new ResponseEntity<Page<ProductListDto>>(result, HttpStatus.OK);
 	}
 
+	@GetMapping(value = "/search/v2")
+	public ResponseEntity<Page<ProductListDto>> searchByRequired(@RequestParam(name = "page", defaultValue = "1") int page,
+															 @RequestParam(name = "limit", defaultValue = "24") int limit,
+															 @RequestParam(name = "keyword", defaultValue = "") String keyword,
+															 @RequestParam(name = "sortBy", defaultValue = "createdDate") String sortBy,
+															 @RequestParam(name = "sortValue", defaultValue = "DESC") String sortValue,
+															 @RequestParam(name = "brand", defaultValue = "") String brand,
+															 @RequestParam(name = "price", defaultValue = "") String price,
+																 @RequestParam(name = "category", defaultValue="") String category) {
+		SearchDto dto = new SearchDto(page, limit, keyword);
+		dto.setSortBy(sortBy);
+		dto.setSortValue(sortValue);
+		dto.setBrand(brand);
+		dto.setPrice(price);
+		dto.setCategory(category);
+		Page<ProductListDto> result = service.productList(dto);
+		return new ResponseEntity<Page<ProductListDto>>(result, HttpStatus.OK);
+	}
+
+
 	// lấy toàn bộ sản phẩm có trạng thái 1 theo danh mục
 	@GetMapping(value = "/danh-muc/{category}", name = "getByCategory")
 	public ResponseEntity<Page<ProductListDto>> searchByPageCategory(
