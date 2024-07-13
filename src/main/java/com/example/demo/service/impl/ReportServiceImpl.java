@@ -73,27 +73,34 @@ public class ReportServiceImpl implements ReportService {
 //		 inner join tbl_user as u on o.user_id = u.id
 //		 and o.status = 2
 //		 group by o.user_id
-
 		int pageIndex = dto.getPageIndex();
 		int pageSize = dto.getPageSize();
 		if (pageIndex > 0)
 			pageIndex -= 1;
 		else
 			pageIndex = 0;
+
 		String whereClause = " where (1=1) ";
-		String groupOrderClause = " GROUP BY o.user.id ORDER BY quantity_buy DESC";
-		String sqlCount = "select count(*) from Order as o " + "INNER JOIN User u ON u.id = o.user.id and o.status = 3 "
+		String groupOrderClause = " GROUP BY u.id ORDER BY quantity_buy DESC";
+
+		// Corrected sqlCount query
+		String sqlCount = "select count(*) from Order as o "
+				+ "INNER JOIN User u ON u.id = o.user.id and o.status = 3 "
+				+ "where (1=1) "
 				+ "GROUP BY o.user.id";
-		String sql = "select new com.example.demo.dto.report.ReportCustomer(u.id as id, u.fullname as customer_name, "
-				+ "u.phone as customer_phone," + " o.id as order_id, " + " SUM(o.total_item) as quantity_buy, "
-				+ " SUM(o.total_price) as total_price)" + " from Order as o "
-				+ " INNER JOIN User u ON u.id = o.user.id " + " and o.status = 3 ";
+
+		// Corrected main sql query
+		String sql = "select new com.example.demo.dto.report.ReportCustomer(u.id, u.fullname, "
+				+ "u.phone, o.id as order_id, SUM(o.total_item) as quantity_buy , "
+				+ "SUM(o.total_price) as total_price) from Order as o "
+				+ "INNER JOIN o.user u on u.id = o.user.id "
+				+ "and o.status = 3 ";
+
 		if (dto.getLast_date() != null
 				&& (dto.getLast_date() == 1 || dto.getLast_date() == 7 || dto.getLast_date() == 30)) {
 			whereClause += " AND (TIMESTAMPDIFF(DAY, o.createdDate, NOW()) <= " + dto.getLast_date() + " )";
-		} else {
-			whereClause += "";
 		}
+
 		sql += whereClause + groupOrderClause;
 
 		Query q = manager.createQuery(sql, ReportCustomer.class);
@@ -109,8 +116,45 @@ public class ReportServiceImpl implements ReportService {
 		long count = (long) qCount.getResultList().size();
 		Pageable pageable = PageRequest.of(pageIndex, pageSize);
 
-		Page<ReportCustomer> result = new PageImpl<ReportCustomer>(entities, pageable, count);
+		Page<ReportCustomer> result = new PageImpl<>(entities, pageable, count);
 		return result;
+//		int pageIndex = dto.getPageIndex();
+//		int pageSize = dto.getPageSize();
+//		if (pageIndex > 0)
+//			pageIndex -= 1;
+//		else
+//			pageIndex = 0;
+//		String whereClause = " where (1=1) ";
+//		String groupOrderClause = " GROUP BY o.user.id ORDER BY quantity_buy DESC";
+//		String sqlCount = "select count(*) from Order as o " + "INNER JOIN User u ON u.id = o.user.id and o.status = 3 "
+//				+ "GROUP BY o.user.id";
+//		String sql = "select new com.example.demo.dto.report.ReportCustomer(u.id as id, u.fullname as customer_name, "
+//				+ "u.phone as customer_phone," + " o.i vcd as order_id, " + " SUM(o.total_item) as quantity_buy, "
+//				+ " SUM(o.total_price) as total_price)" + " from Order as o "
+//				+ " INNER JOIN User u ON u.id = o.user.id " + " and o.status = 3 ";
+//		if (dto.getLast_date() != null
+//				&& (dto.getLast_date() == 1 || dto.getLast_date() == 7 || dto.getLast_date() == 30)) {
+//			whereClause += " AND (TIMESTAMPDIFF(DAY, o.createdDate, NOW()) <= " + dto.getLast_date() + " )";
+//		} else {
+//			whereClause += "";
+//		}
+//		sql += whereClause + groupOrderClause;
+//
+//		Query q = manager.createQuery(sql, ReportCustomer.class);
+//		Query qCount = manager.createQuery(sqlCount);
+//		q.setMaxResults(pageSize);
+//
+//		int startPosition = pageIndex * pageSize;
+//		q.setFirstResult(startPosition);
+//		q.setMaxResults(pageSize);
+//
+//		@SuppressWarnings("unchecked")
+//		List<ReportCustomer> entities = q.getResultList();
+//		long count = (long) qCount.getResultList().size();
+//		Pageable pageable = PageRequest.of(pageIndex, pageSize);
+//
+//		Page<ReportCustomer> result = new PageImpl<ReportCustomer>(entities, pageable, count);
+//		return result;
 	}
 
 	// thống kê sản phẩm bán chạy nhất
