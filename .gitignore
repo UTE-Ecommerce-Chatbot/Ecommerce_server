@@ -1,6 +1,8 @@
 # Compiled class file
 *.class
-
+# Ignore Docker files
+Dockerfile
+docker-compose.yml
 # Log file
 *.log
 
