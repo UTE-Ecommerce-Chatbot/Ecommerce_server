@@ -10,7 +10,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>boec</artifactId>
+	<artifactId>ecomerce-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ecomerce-server</name>
 	<description>Demo</description>
