@@ -2,6 +2,7 @@ package com.example.demo.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -28,22 +29,35 @@ public class ContentBasedService {
             }
             cosine_similarity = dotProduct / (Math.sqrt(queryDistance) * Math.sqrt(queryByDocument));
             result.add(cosine_similarity);
+//            result.sort(Comparator.comparingDouble(o -> Double.isNaN(o) ? Double.POSITIVE_INFINITY : -o));
+//                        System.out.println("Result "+result);
+
         }
         List<RecommendProduct> items = new ArrayList<>();
         for (int i = 0; i < result.size(); i++) {
             if(!Double.isNaN(result.get(i))) {
-                items.add(new RecommendProduct(result.get(i), i));
+            items.add(new RecommendProduct(result.get(i), i));
            }
+//            System.out.println("Items"+items);
         }
         items.sort((RecommendProduct o1, RecommendProduct o2) -> o2.getValue() - o1.getValue() > 0 ? 1 : -1);
+//                o2.getValue().compareTo(o1.getValue()));
+
         List<RecommendProduct> listResult = new ArrayList<>();
-        if(is_get_all == true) {
-        	for(int i = 0; i<items.size(); i++) {
-            	listResult.add(new RecommendProduct(items.get(i).getValue(), items.get(i).getIndex()));
+        if(is_get_all) {
+            for (RecommendProduct item : items) {
+                listResult.add(new RecommendProduct(item.getValue(), item.getIndex()));
             }
         } else {
-        	for(int i = 1; i<items.size(); i++) {
-            	listResult.add(new RecommendProduct(items.get(i).getValue(), items.get(i).getIndex()));
+            if (items.size()>=6) {
+                for (int i = 0; i < 6; i++) {
+                    listResult.add(new RecommendProduct(items.get(i).getValue(), items.get(i).getIndex()));
+                }
+            }
+            else {
+                for (int i = 0; i < items.size(); i++) {
+                    listResult.add(new RecommendProduct(items.get(i).getValue(), items.get(i).getIndex()));
+                }
             }
         }
         return listResult;
@@ -59,6 +73,12 @@ public class ContentBasedService {
 	        List<String> doc7 = Arrays.asList("foobar", "poopjenkins", "some date");
 	        List<List<String>> documents = Arrays.asList(doc1, doc2, doc3, doc4, doc5, doc6, doc7);
 
-	        System.out.println("Result = " + similarByTags(Arrays.asList("hillthompson", "poopjenkins"), documents, false));
+            List<RecommendProduct>result = similarByTags((Arrays.asList("hillthompson", "buồn")), documents, true);
+
+            for ( RecommendProduct r : result){
+                System.out.println("Result = " + documents.get(r.getIndex()));
+
+            }
+
 	    }
 }

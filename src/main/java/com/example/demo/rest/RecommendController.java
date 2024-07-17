@@ -66,6 +66,12 @@ public class RecommendController {
         dto.setBrand("");
         dto.setPrice("");
         Page<ProductListDto> dtos = productService.productList(dto);
+        System.out.println("tags :" + tags.length);
+        if (tags == null || tags.length == 0 ) {
+
+            List<ProductListDto> defaultProducts = new ArrayList<>(dtos.toList());
+            return new ResponseEntity<List<ProductListDto>>(defaultProducts, HttpStatus.OK);
+        }
 
         for (ProductListDto item : dtos.toList()) {
             List<String> listTags = new ArrayList<String>();
@@ -94,6 +100,10 @@ public class RecommendController {
         List<RecommendProduct> list = ContentBasedService.similarByTags(tagList, documents, false);
 
         List<ProductListDto> result = new ArrayList<ProductListDto>();
+        if (list.isEmpty()){
+            result = new ArrayList<>(dtos.toList());
+
+        }
         for (RecommendProduct recommendProduct : list) {
             Product p = productRepos.getById(dtos.toList().get(recommendProduct.getIndex()).getId());
             ProductListDto pDto = new ProductListDto(p);
@@ -116,8 +126,9 @@ public class RecommendController {
     public ResponseEntity<?> recommendList() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-//		System.out.println(username);
+		System.out.println(username);
         if (Objects.equals(username, "anonymousUser")) {
+//            productService.topSaleProduct()
             return new ResponseEntity<String>(new String("ERROR"), HttpStatus.BAD_REQUEST);
         } else {
             List<List<String>> documents = new ArrayList<List<String>>();
@@ -144,6 +155,7 @@ public class RecommendController {
 //					for (TagDto tag : item.getTags()) {
 //						listTags.add(tag.getCode());
 //					}
+                    System.out.println("Feature:" + item.getFeatures());
                     if (Objects.nonNull(item.getFeatures())) {
                         String t[] = item.getFeatures().split(",");
                         for (int i = 0; i < t.length; i++) {
@@ -166,6 +178,7 @@ public class RecommendController {
                         documents.add(listTags);
                     }
                 }
+
                 List<RecommendProduct> list = new ArrayList<>();
                 int tagsSize = tags.size();
                 for (int i = 0; i < tagsSize; i++) {

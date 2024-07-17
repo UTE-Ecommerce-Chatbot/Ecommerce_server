@@ -18,7 +18,7 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
 	
 	public List<OrderDetail> getByOrderAndProduct(Order order, Product product);
 	
-	@Query("SELECT sum(u.quantity) FROM OrderDetail u WHERE u.product.id=?1 AND u.order.status=2")
+	@Query("SELECT sum(u.quantity) FROM OrderDetail u WHERE u.product.id=?1 AND u.order.status=3")
 	public Integer countAllByProductId(Long id);
 	
 	// tính tổng 5 sản phẩm bản chạy nhất

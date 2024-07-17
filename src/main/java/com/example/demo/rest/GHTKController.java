@@ -47,8 +47,8 @@ import com.example.demo.repository.OrderRepository;
 @RequestMapping(value = "/api/services/ship/ghtk")
 public class GHTKController {
 
-	public final static String TOKEN = "860fE249A6871265dCc3Eb4Ab3900b5cB0f7bD10";
-	public final static String API_ENDPOINT = "https://services.ghtklab.com";
+	public final static String TOKEN = "803bbd8c96895f227af757875b5fc917e2a04d84";
+	public final static String API_ENDPOINT = "https://services.giaohangtietkiem.vn";
 	public final static String CREATE_ORDER_URL = API_ENDPOINT + "/services/shipment/order/?ver=1.5";
 	public final static String CALCUATE_SHIP_FEE_URL = API_ENDPOINT + "/services/shipment/fee";
 	public final static String CHECKING_STATUS_URL = API_ENDPOINT + "/services/shipment/v2/";

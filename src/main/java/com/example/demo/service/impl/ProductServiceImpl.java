@@ -129,31 +129,26 @@ public class ProductServiceImpl implements ProductService {
 		String sql = "select new com.example.demo.dto.product.ProductListDto(entity) from  Product as entity where entity.display=1 AND (1=1)  ";
 		if (dto.getKeyword() != null && StringUtils.hasText(dto.getKeyword())) {
 
-			if (dto.getKeyword().contains(" ")) {
-				// String[] keywords = dto.getKeyword().split(" ");
-				whereClause += " AND ( entity.name LIKE " + "'" + dto.getKeyword() + "'"
-						+ " OR entity.description LIKE " + "'" + dto.getKeyword() + "'"
-						+ " OR entity.slug LIKE " + "'" + dto.getKeyword() + "'" + " OR entity.category.name LIKE "
-						+ "'" + dto.getKeyword() + "'" + " OR entity.category.code LIKE " + "'" + dto.getKeyword() + "'"
-						+ " OR entity.subcategory.name LIKE " + "'" + dto.getKeyword() + "'"
-						+ " OR entity.subcategory.code LIKE " + "'" + dto.getKeyword() + "')";
-				// whereClause += " AND ( entity.name LIKE " + "'" + keywords[0] + "'" + " OR
-				// entity.description LIKE "+ "'" + keywords[0]+ "'"
-				// + " OR entity.slug LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.name
-				// LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.code LIKE " + "'"+
-				// keywords[0]+ "'"
-				// + " OR entity.subcategory.name LIKE " + "'"+ keywords[0] + "'"+ " OR
-				// entity.subcategory.code LIKE " + "'"+ keywords[0]+ "'";
-				// for(int i = 1; i < keywords.length; i++) {
-				// whereClause += " or entity.name LIKE " + "'" + keywords[i]+ "'" + " OR
-				// entity.description LIKE "+ "'" + keywords[i]+ "'"
-				// + " OR entity.slug LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.name
-				// LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.code LIKE "+ "'" +
-				// keywords[i]+ "'"
-				// + " OR entity.subcategory.name LIKE "+ "'" + keywords[i]+ "'" + " OR
-				// entity.subcategory.code LIKE "+ "'" + keywords[i]+ "'" ;
-				// }
-				// whereClause += " ) ";
+			if(dto.getKeyword().contains(" ")) {
+				String[] keywords = dto.getKeyword().split(" ");
+				whereClause += " AND ( entity.name LIKE  '%" + dto.getKeyword() + "%' " +
+						"OR entity.description LIKE '%" + dto.getKeyword() + "%' " +
+						"OR entity.category.name LIKE '%" + dto.getKeyword() + "%' " +
+						"OR entity.category.code LIKE '%" + dto.getKeyword() + "%' " +
+						"OR entity.subcategory.name LIKE '%" + dto.getKeyword() + "%' " +
+						"OR entity.subcategory.code LIKE '%" + dto.getKeyword() + "%' )";
+				whereClause += " AND ( entity.name LIKE " + "'" + keywords[0] + "'" + " OR entity.description LIKE "+ "'" + keywords[0]+ "'"
+						+ " OR entity.slug LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.name LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.code LIKE " + "'"+ keywords[0]+ "'"
+						+ " OR entity.subcategory.name LIKE " + "'"+ keywords[0] + "'"+ " OR entity.subcategory.code LIKE " + "'"+ keywords[0]+ "'";
+
+				for(int i = 1; i < keywords.length; i++) {
+					whereClause += " or entity.name LIKE " + "'" +  keywords[i]+ "'" + " OR entity.description LIKE "+ "'" + keywords[i]+ "'"
+							+ " OR entity.slug LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.name LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.code LIKE "+ "'" + keywords[i]+ "'"
+							+ " OR entity.subcategory.name LIKE "+ "'" + keywords[i]+ "'" + " OR entity.subcategory.code LIKE "+ "'" + keywords[i]+ "'" ;
+				}
+				whereClause += " ) ";
+
+				System.out.println(whereClause);
 			} else {
 				whereClause += " AND ( entity.name LIKE :text " + "OR entity.description LIKE :text "
 						+ "OR entity.slug LIKE :text " + "OR entity.slug LIKE :text "
@@ -162,6 +157,8 @@ public class ProductServiceImpl implements ProductService {
 			}
 
 		}
+
+
 
 		if (dto.getCategory() != null) {
 			whereClause += " AND ( entity.category.code LIKE :category )";
