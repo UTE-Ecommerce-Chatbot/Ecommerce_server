@@ -209,16 +209,16 @@ public class OrderController {
 			return new ResponseEntity<MessageResponse>(new MessageResponse("Đang chờ nhập hàng từ nhà cung cấp!"),
 					HttpStatus.BAD_REQUEST);
 		} else {
-			List<OrderDetail> orderDetailDtos = order.getOrderDetails();
-			for (OrderDetail i : orderDetailDtos) {
-				Product product = productRepos.getById(i.getProduct().getId());
-				Color color = colorRepos.findOneByName(i.getColor());
-				if (inventoryRepos.existsByProductAndColor(product, color)) {
-					Inventory inventory = inventoryRepos.getOneByProductAndColor(product, color);
-					inventory.setQuantity_item(inventory.getQuantity_item() - i.getQuantity());
-					inventoryRepos.save(inventory);
-				}
-			}
+//			List<OrderDetail> orderDetailDtos = order.getOrderDetails();
+//			for (OrderDetail i : orderDetailDtos) {
+//				Product product = productRepos.getById(i.getProduct().getId());
+//				Color color = colorRepos.findOneByName(i.getColor());
+//				if (inventoryRepos.existsByProductAndColor(product, color)) {
+//					Inventory inventory = inventoryRepos.getOneByProductAndColor(product, color);
+//					inventory.setQuantity_item(inventory.getQuantity_item() - i.getQuantity());
+//					inventoryRepos.save(inventory);
+//				}
+//			}
 			order.setStatus(3);
 			order.setCompleteDate(new Timestamp(new Date().getTime()).toString());
 		}
@@ -253,7 +253,7 @@ public class OrderController {
 			return new ResponseEntity<MessageResponse>(
 					new MessageResponse("Đơn hàng không thành công, khách trả lại hàng!"), HttpStatus.BAD_REQUEST);
 		} else if (order.getStatus() == 3) {
-			return new ResponseEntity<MessageResponse>(new MessageResponse("Đơn hàng này đã được xác nhận!"),
+			return new ResponseEntity<MessageResponse>(new MessageResponse("Đơn hàng này đã hoàn thành, không thể xác nhận!"),
 					HttpStatus.BAD_REQUEST);
 		} else {
 			List<OrderDetail> orderDetailDtos = order.getOrderDetails();
@@ -262,23 +262,23 @@ public class OrderController {
 				Color color = colorRepos.findOneByName(i.getColor());
 				Inventory inv = inventoryRepos.getOneByProductAndColor(product, color);
 				Integer quantity_in_stock = inv.getQuantity_item();
-				if (quantity_in_stock == 0) {
-					order.setStatus(1);
-					order.setPrepareDate(new Timestamp(new Date().getTime()).toString());
-					orderRepository.save(order);
-					return new ResponseEntity<MessageResponse>(
-							new MessageResponse(
-									"Sản phẩm " + i.getProduct().getName() + " đã hết hàng, vui lòng nhập thêm hàng."),
-							HttpStatus.BAD_REQUEST);
-				} else if (i.getQuantity() > quantity_in_stock) {
-					order.setStatus(1);
-					order.setPrepareDate(new Timestamp(new Date().getTime()).toString());
-					orderRepository.save(order);
-					return new ResponseEntity<MessageResponse>(
-							new MessageResponse("Sản phẩm " + i.getProduct().getName() + " chỉ còn lại "
-									+ quantity_in_stock + " sản phẩm, Vui lòng nhập thêm hàng."),
-							HttpStatus.BAD_REQUEST);
-				}
+//				if (quantity_in_stock == 0) {
+//					order.setStatus(1);
+//					order.setPrepareDate(new Timestamp(new Date().getTime()).toString());
+//					orderRepository.save(order);
+//					return new ResponseEntity<MessageResponse>(
+//							new MessageResponse(
+//									"Sản phẩm " + i.getProduct().getName() + " đã hết hàng, vui lòng nhập thêm hàng."),
+//							HttpStatus.BAD_REQUEST);
+//				} else if (i.getQuantity() > quantity_in_stock) {
+//					order.setStatus(1);
+//					order.setPrepareDate(new Timestamp(new Date().getTime()).toString());
+//					orderRepository.save(order);
+//					return new ResponseEntity<MessageResponse>(
+//							new MessageResponse("Sản phẩm " + i.getProduct().getName() + " chỉ còn lại "
+//									+ quantity_in_stock + " sản phẩm, Vui lòng nhập thêm hàng."),
+//							HttpStatus.BAD_REQUEST);
+//				}
 			}
 			order.setStatus(2);
 			shipment.setOrder_code(order_code);

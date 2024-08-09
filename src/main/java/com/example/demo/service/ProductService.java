@@ -3,6 +3,7 @@ package com.example.demo.service;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.AdvanceSearchDto;
@@ -20,6 +21,9 @@ public interface ProductService {
 	
 	// Lấy các sản phẩm hiển thị lên trang chủ, có trạng thái hiển thị là 1
 	public Page<ProductListDto> productList(SearchDto dto);
+
+	public Page<ProductListDto> checkAvaibility(SearchDto dto);
+
 
 	public Page<ProductListDto> productList2(SearchDto dto);
 

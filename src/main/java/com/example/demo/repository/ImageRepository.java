@@ -13,9 +13,10 @@ import com.example.demo.entity.product.Image;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
 	public List<Image> findAllByProductId(Long id);
-	
-	@Transactional
+
 	@Modifying
-	@Query("Delete from Image entity WHERE entity.product.id =?1")
+	@Transactional
+ 	@Query("Delete from Image entity WHERE entity.product.id =?1")
 	public void deleteByProductId(Long id);
+	public void deleteByProduct_Id(Long id);
 }

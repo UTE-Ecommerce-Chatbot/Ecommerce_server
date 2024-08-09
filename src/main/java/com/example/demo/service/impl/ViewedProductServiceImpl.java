@@ -8,7 +8,10 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import com.example.demo.dto.product.ProductDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.product.ProductListDto;
@@ -35,6 +38,23 @@ public class ViewedProductServiceImpl implements ViewedProductService {
 
 	@Autowired
 	private ViewedProductRepository viewedRepos;
+
+	@Override
+	public List<ProductListDto>getListRecentViewed(Long id){
+		Pageable pageable = PageRequest.of(0,10);
+		try{
+			List<ProductListDto> products = viewedRepos.findTop10DistinctProductsByRecentViews(id, pageable);
+			System.out.println(products);
+            return products;
+
+		}catch (Exception e){
+			System.out.println("Error: "+e.getMessage());
+			return null;
+		}
+
+	}
+
+
 
 	@Override
 	public List<ProductListDto> getListByUser(String username) {
@@ -75,8 +95,10 @@ public class ViewedProductServiceImpl implements ViewedProductService {
 
 	@Override
 	public List<ProductListDto> getListMostPopular() {
-		String sql = "SELECT new com.example.demo.dto.user.ViewedProductDto(v.product.id as productId, count(v) as view_count) "
-				+ " FROM ViewedProduct as v " + " GROUP BY v.product " + " ORDER BY view_count DESC ";
+		String sql = "SELECT new com.example.demo.dto.user.ViewedProductDto(v.product.id, count(v) as view_count) " +
+				"FROM ViewedProduct v " +
+				"GROUP BY v.product " +
+				"ORDER BY view_count DESC";
 		Query q = manager.createQuery(sql, ViewedProductDto.class);
 		q.setMaxResults(12);
 		@SuppressWarnings("unchecked")

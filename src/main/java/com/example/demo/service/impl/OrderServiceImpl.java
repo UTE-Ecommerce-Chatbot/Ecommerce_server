@@ -6,6 +6,10 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import com.example.demo.entity.inventory.Inventory;
+import com.example.demo.exception.InsufficientStockException;
+import com.example.demo.exception.InventoryNotFoundException;
+import com.example.demo.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -13,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.example.demo.dto.AdvanceSearchDto;
@@ -32,15 +37,6 @@ import com.example.demo.entity.product.Color;
 import com.example.demo.entity.product.Product;
 import com.example.demo.entity.user.Seller;
 import com.example.demo.entity.user.User;
-import com.example.demo.repository.ColorRepository;
-import com.example.demo.repository.OrderDetailRepository;
-import com.example.demo.repository.OrderRepository;
-import com.example.demo.repository.PaymentMethodRepository;
-import com.example.demo.repository.PaymentRepository;
-import com.example.demo.repository.ProductRepository;
-import com.example.demo.repository.SellerRepository;
-import com.example.demo.repository.ShipmentRepository;
-import com.example.demo.repository.UserRepository;
 import com.example.demo.service.OrderService;
 
 @Service
@@ -51,6 +47,9 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	private OrderRepository orderRepository;
+
+	@Autowired
+	private InventoryRepository inventoryRepository;
 
 	@Autowired
 	private OrderDetailRepository orderDetailRepository;
@@ -75,6 +74,7 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	private SellerRepository sellerRepos;
+
 
 	@Override
 	public Page<OrderHisDto> getAllOrder(AdvanceSearchDto dto) {
@@ -162,6 +162,7 @@ public class OrderServiceImpl implements OrderService {
 		return orderDtos;
 	}
 
+	@Transactional
 	@Override
 	public OrderDto createOrder(OrderDto dto) {
 		if (dto != null) {
@@ -226,8 +227,20 @@ public class OrderServiceImpl implements OrderService {
 
 			List<OrderDetailDto> orderDetailDtos = dto.getOrder_details();
 			for (OrderDetailDto i : orderDetailDtos) {
-				Product product = productRepository.getById(i.getProduct_id());
 				Color color = colorRepos.findOneByName(i.getColor());
+
+				Inventory inventory = inventoryRepository.findByProductIdAndColorIdForUpdate(i.getProduct_id(), color.getId())
+						.orElseThrow(() -> new
+								InventoryNotFoundException(i.getProduct_id(), color.getId()));
+
+				if (inventory.getQuantity_item() < i.getQuantity()) {
+					throw new InsufficientStockException(inventory.getProduct().getId());
+				}
+
+				inventory.setQuantity_item(inventory.getQuantity_item() - i.getQuantity());
+				inventoryRepository.save(inventory);
+				Product product = productRepository.getById(i.getProduct_id());
+
 //				if (inventoryRepos.existsByProductAndColor(product, color)) {
 //					Inventory inventory = inventoryRepos.getOneByProductAndColor(product, color);
 //					inventory.setQuantity_item(inventory.getQuantity_item() - i.getQuantity());

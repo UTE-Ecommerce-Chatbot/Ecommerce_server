@@ -2,16 +2,19 @@ package com.example.demo.service.impl;
 
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import com.example.demo.dto.inventory.TotalInventoryDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -114,6 +117,9 @@ public class ProductServiceImpl implements ProductService {
 	Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class); // Thay YourClassName bằng tên lớp của bạn
 
 
+
+
+
 	@Override
 	public Page<ProductListDto> productList(SearchDto dto) {
 		int pageIndex = dto.getPageIndex();
@@ -137,14 +143,14 @@ public class ProductServiceImpl implements ProductService {
 						"OR entity.category.code LIKE '%" + dto.getKeyword() + "%' " +
 						"OR entity.subcategory.name LIKE '%" + dto.getKeyword() + "%' " +
 						"OR entity.subcategory.code LIKE '%" + dto.getKeyword() + "%' )";
-				whereClause += " AND ( entity.name LIKE " + "'" + keywords[0] + "'" + " OR entity.description LIKE "+ "'" + keywords[0]+ "'"
-						+ " OR entity.slug LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.name LIKE "+ "'" + keywords[0]+ "'" + " OR entity.category.code LIKE " + "'"+ keywords[0]+ "'"
+				whereClause += " AND ( entity.name LIKE " + "'%" + keywords[0] + "%'" + " OR entity.description LIKE "+ "'%" + keywords[0]+ "%'"
+						+ " OR entity.slug LIKE "+ "'%" + keywords[0]+ "%'" + " OR entity.category.name LIKE "+ "'%" + keywords[0]+ "%'" + " OR entity.category.code LIKE " + "'%"+ keywords[0]+ "%'"
 						+ " OR entity.subcategory.name LIKE " + "'"+ keywords[0] + "'"+ " OR entity.subcategory.code LIKE " + "'"+ keywords[0]+ "'";
 
 				for(int i = 1; i < keywords.length; i++) {
-					whereClause += " or entity.name LIKE " + "'" +  keywords[i]+ "'" + " OR entity.description LIKE "+ "'" + keywords[i]+ "'"
-							+ " OR entity.slug LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.name LIKE "+ "'" + keywords[i]+ "'" + " OR entity.category.code LIKE "+ "'" + keywords[i]+ "'"
-							+ " OR entity.subcategory.name LIKE "+ "'" + keywords[i]+ "'" + " OR entity.subcategory.code LIKE "+ "'" + keywords[i]+ "'" ;
+					whereClause += " or entity.name LIKE " + "'%" +  keywords[i]+ "%'" + " OR entity.description LIKE "+ "'%" + keywords[i]+ "%'"
+							+ " OR entity.slug LIKE "+ "'%" + keywords[i]+ "%'" + " OR entity.category.name LIKE "+ "'%" + keywords[i]+ "%'" + " OR entity.category.code LIKE "+ "'%" + keywords[i]+ "%'"
+							+ " OR entity.subcategory.name LIKE "+ "'%" + keywords[i]+ "%'" + " OR entity.subcategory.code LIKE "+ "'%" + keywords[i]+ "%'" ;
 				}
 				whereClause += " ) ";
 
@@ -157,6 +163,8 @@ public class ProductServiceImpl implements ProductService {
 			}
 
 		}
+
+
 
 
 
@@ -305,6 +313,28 @@ public class ProductServiceImpl implements ProductService {
 		Page<ProductListDto> result = new PageImpl<ProductListDto>(entities, pageable, count);
 		return result;
 	}
+
+
+	@Override
+	public Page<ProductListDto> checkAvaibility(SearchDto dto) {
+		Page<ProductListDto> productPage = productList(dto); // Tìm kiếm sản phẩm theo từ khóa
+		List<ProductListDto> productDtos = productPage.getContent(); // Lấy danh sách sản phẩm từ trang
+		if (productDtos.isEmpty()) {
+			return productPage; // Hoặc trả về PageImpl<> nếu cần tùy chỉnh
+		}
+
+		// Lấy danh sách productId của tất cả các sản phẩm trong trang
+
+		for (ProductListDto listDto : productDtos){
+			TotalInventoryDto inventories = inventoryRepos.findTotalInventoryByProduct(listDto.getId());
+			listDto.setIn_stock(inventories.getTotalInventory());
+		}
+
+		return new PageImpl<>(productDtos, productPage.getPageable(), productPage.getTotalElements());
+	}
+
+
+
 
 	@Override
 	public Page<ProductListDto> productList2(SearchDto dto) {
@@ -651,6 +681,9 @@ public class ProductServiceImpl implements ProductService {
 			entity.setDescription(dto.getDescription());
 			entity.setSizeWeight(dto.getSizeWeight());
 			entity.setMaterial(dto.getMaterial());
+
+			System.out.println("Features List:" +dto.getFeatures());
+
 			entity.setFeatures(dto.getFeatures());
 			entity.setDisplay(1);
 			entity.setCategory(category);
@@ -814,6 +847,7 @@ public class ProductServiceImpl implements ProductService {
 
 	@Override
 	public ProductDto getDetailProduct(Long id) {
+
 		Product product = productRepos.getById(id);
 		ProductDto dto = new ProductDto(product);
 		List<String> colors = new ArrayList<>();

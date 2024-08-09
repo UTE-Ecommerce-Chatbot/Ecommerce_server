@@ -1,13 +1,15 @@
 package com.example.demo.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.demo.entity.user.ViewedProduct;
+import com.example.demo.repository.ViewedProductRepository;
+import com.example.demo.service.ViewedProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -47,6 +49,12 @@ public class RecommendController {
     @Autowired
     private RecommendService recommendService;
 
+    @Autowired
+    private ViewedProductService viewedProductService;
+
+    @Autowired
+    private ViewedProductRepository viewedProductRepository;
+
     @GetMapping(value = "/")
     public ResponseEntity<List<Long>> test() {
         List<Long> result = recommendService.getAllProductIdUserLikeAndRating("huonghuongnewton1@gmail.com");
@@ -74,14 +82,11 @@ public class RecommendController {
         }
 
         for (ProductListDto item : dtos.toList()) {
-            List<String> listTags = new ArrayList<String>();
-            String t[] = item.getFeatures().split(",");
-            for (int i = 0; i < t.length; i++) {
-                listTags.add(t[i]);
-            }
-//			for (TagDto tag : item.getTags()) {
-//				listTags.add(tag.getCode());
-//			}
+            List<String> listTags = Optional.ofNullable(item.getFeatures())
+                    .filter(features -> !features.isEmpty())
+                    .map(features -> Arrays.stream(features.split(","))
+                            .collect(Collectors.toList()))
+                    .orElse(Collections.emptyList());
             documents.add(listTags);
         }
 
@@ -122,14 +127,84 @@ public class RecommendController {
         return new ResponseEntity<List<ProductListDto>>(result, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/view/{id}")
+    public ResponseEntity<?>viewRecent(@PathVariable Long id){
+        List<ProductListDto> recentViewedProducts = viewedProductService.getListRecentViewed(id);
+        if (recentViewedProducts.isEmpty()) {
+            return new ResponseEntity<>("No recent viewed products", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(recentViewedProducts, HttpStatus.OK);
+        }
+    }
+
+
+    @PostMapping("/similar/recent")
+    public ResponseEntity<List<ProductListDto>> getSimilarListToRecentProduct() {
+        Pageable pageable = PageRequest.of(0, 1); // Lấy sản phẩm gần đây nhất
+        List<ViewedProduct> recentViewedProducts = viewedProductRepository.findAllByOrderByCreatedDateDesc(pageable);
+        List<ProductListDto> similarProducts;
+        if (recentViewedProducts.isEmpty()) {
+            similarProducts =  new ArrayList<>();
+        }
+
+        Product recentProduct = recentViewedProducts.get(0).getProduct();
+        String[] tags = recentProduct.getFeatures().split(",");
+
+        List<List<String>> documents = new ArrayList<>();
+        int page = 1, limit = 100;
+        String keyword = "";
+        SearchDto dto = new SearchDto(page, limit, keyword, null, null);
+        dto.setSortBy("createdDate");
+        dto.setSortValue("DESC");
+        Page<ProductListDto> dtos = productService.productList(dto);
+        if (tags == null || tags.length == 0 ) {
+
+            List<ProductListDto> defaultProducts = new ArrayList<>(dtos.toList());
+            return new ResponseEntity<List<ProductListDto>>(defaultProducts, HttpStatus.OK);
+        }
+        try{      for (ProductListDto item : dtos.toList()) {
+            if (item.getFeatures() != null && !item.getFeatures().isEmpty()) {
+                String[] t = item.getFeatures().split(",");
+                List<String> listTags = new ArrayList<>(Arrays.asList(t));
+                documents.add(listTags);
+            }
+        }}catch(Exception e){System.out.println(e.getMessage());}
+
+        List<String> tagList = new ArrayList<>(Arrays.asList(tags));
+        List<RecommendProduct> list = ContentBasedService.similarByTags(tagList, documents, false);
+
+        List<ProductListDto> result = new ArrayList<>();
+        if (list.isEmpty()) {
+            result = new ArrayList<>(dtos.toList());
+        } else {
+            for (RecommendProduct recommendProduct : list) {
+                Product p = productRepos.getById(dtos.toList().get(recommendProduct.getIndex()).getId());
+                ProductListDto pDto = new ProductListDto(p);
+                result.add(pDto);
+            }
+        }
+
+        Integer seller_count = 0;
+        for (ProductListDto item : result) {
+            if (orderDetailRepos.countAllByProductId(item.getId()) != null) {
+                seller_count += orderDetailRepos.countAllByProductId(item.getId());
+            } else {
+                seller_count = 0;
+            }
+            item.setSeller_count(seller_count);
+            seller_count = 0;
+        }
+        similarProducts = result.stream().limit(12).collect(Collectors.toList());
+        return new ResponseEntity<>(similarProducts, HttpStatus.OK);
+    }
+
     @PostMapping(value = "/list")
     public ResponseEntity<?> recommendList() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 		System.out.println(username);
         if (Objects.equals(username, "anonymousUser")) {
-//            productService.topSaleProduct()
-            return new ResponseEntity<String>(new String("ERROR"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("No recent viewed products", HttpStatus.OK);
         } else {
             List<List<String>> documents = new ArrayList<List<String>>();
             int page = 1, limit = 100;
@@ -142,7 +217,7 @@ public class RecommendController {
             Page<ProductListDto> dtos = productService.productList(dto);
 
             List<Long> list_id_user_comment_and_like = recommendService.getAllProductIdUserLikeAndRating(username);
-            if (list_id_user_comment_and_like.size() > 0) {
+            if (!list_id_user_comment_and_like.isEmpty()) {
                 List<ProductListDto> list_product_rating_and_like = new ArrayList<ProductListDto>();
                 for (Long i : list_id_user_comment_and_like) {
                     Product p = productRepos.getById(i);
@@ -211,7 +286,7 @@ public class RecommendController {
                 }
                 return new ResponseEntity<List<ProductListDto>>(result, HttpStatus.OK);
             } else {
-                return new ResponseEntity<String>(new String("EMPTY"), HttpStatus.OK);
+                return getSimilarListToRecentProduct();
             }
         }
     }

@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -20,6 +21,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +66,7 @@ public class GHNController {
     public Map<String, Object> createOrder(@PathVariable(name = "id") Long order_id, @RequestParam Integer weight,
                                            @RequestParam Integer length, @RequestParam Integer width, @RequestParam Integer height)
             throws ClientProtocolException, IOException {
-
+        System.out.println("Id tao don: "+ order_id);
         Order o = orderRepos.getById(order_id);
         JSONObject json = new JSONObject();
         if (o.getPayment().getStatus() == 1) {
@@ -106,33 +108,57 @@ public class GHNController {
         post.setHeader("token", TOKEN);
         post.setHeader("shopid", SHOP_ID.toString());
         post.setEntity(stringEntity);
-        CloseableHttpResponse res = client.execute(post);
-        BufferedReader rd = new BufferedReader(new InputStreamReader(res.getEntity().getContent()));
-        StringBuilder resultJsonStr = new StringBuilder();
-        String line;
-        while ((line = rd.readLine()) != null) {
-            resultJsonStr.append(line);
-        }
-        JSONObject result = new JSONObject(resultJsonStr.toString());
-        JSONObject data = (JSONObject) result.get("data");
-        JSONObject fee = (JSONObject) data.get("fee");
-        String order_code = data.get("order_code").toString();
-        String expected_delivery_time = data.get("expected_delivery_time").toString();
-        Long total_fee = Long.parseLong(data.get("total_fee").toString());
-        Integer code = Integer.parseInt(result.get("code").toString());
-        String message_display = result.get("message_display").toString();
-        String message = result.get("message").toString();
-        String code_message_value = result.get("code_message_value").toString();
-        Map<String, Object> kq = new HashMap<String, Object>();
-        kq.put("code", code);
-        kq.put("message", message);
-        kq.put("message_display", message_display);
-        kq.put("code_message_value", code_message_value);
-        kq.put("order_code", order_code);
-        kq.put("expected_delivery_time", expected_delivery_time);
-        kq.put("total_fee", total_fee);
-        kq.put("fee", fee.toMap());
-        return kq;
+        try (CloseableHttpResponse res = client.execute(post)) {
+            int statusCode = res.getStatusLine().getStatusCode();
+            if (statusCode < 200 || statusCode >= 300) {
+                HttpEntity entity = res.getEntity();
+                String errorResponse = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                // Xử lý errorResponse, có thể in ra console hoặc ghi log
+                Map<String, Object> errorMap = new HashMap<>();
+                errorMap.put("status", statusCode);
+                errorMap.put("error", errorResponse);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMap).getBody();
+            }
+            BufferedReader rd = new BufferedReader(new InputStreamReader(res.getEntity().getContent()));
+            StringBuilder resultJsonStr = new StringBuilder();
+            String line;
+            while ((line = rd.readLine()) != null) {
+                resultJsonStr.append(line);
+            }
+            JSONObject result = new JSONObject(resultJsonStr.toString());
+            JSONObject data = (JSONObject) result.get("data");
+            JSONObject fee = (JSONObject) data.get("fee");
+            String order_code = data.get("order_code").toString();
+            String expected_delivery_time = data.get("expected_delivery_time").toString();
+            Long total_fee = Long.parseLong(data.get("total_fee").toString());
+            Integer code = Integer.parseInt(result.get("code").toString());
+            String message_display = result.get("message_display").toString();
+            String message = result.get("message").toString();
+            String code_message_value = result.get("code_message_value").toString();
+            Map<String, Object> kq = new HashMap<String, Object>();
+            kq.put("code", code);
+            kq.put("message", message);
+            kq.put("message_display", message_display);
+            kq.put("code_message_value", code_message_value);
+            kq.put("order_code", order_code);
+            kq.put("expected_delivery_time", expected_delivery_time);
+            kq.put("total_fee", total_fee);
+            kq.put("fee", fee.toMap());
+            rd.close();
+            res.close();
+            client.close();
+            return kq;
+
+
+        } catch (IOException e) {
+            // Xử lý ngoại lệ, có thể in ra console hoặc ghi log
+                Map<String, Object> errorMap = new HashMap<>();
+                errorMap.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                errorMap.put("error", "Lỗi khi thực hiện yêu cầu");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMap).getBody();    }
+
+
+            // Lấy thông tin lỗi
     }
 
 
